@@ -1,12 +1,31 @@
 # Project Memory
 
-Read this file before making architectural or product changes.
+Read this file before changing product scope or architecture.
 
-## Purpose
+## Boundary
 
-SignalFound converts paid-ad traffic into evidence-backed website audit leads.
-The application must feel like a credible diagnostic product, not a generic
-lead form or an AI-generated PDF.
+SignalFound is the audit engine only.
+
+The marketer owns:
+
+- advertising and campaign attribution
+- landing page and contact form
+- name, email, mobile number, and consent
+- the CRM lead record and sales funnel
+
+This repository owns:
+
+- authenticated audit intake
+- URL safety checks
+- website evidence collection
+- deterministic scoring
+- evidence-grounded AI explanation
+- private report generation
+- status lookup and signed completion callbacks
+
+The marketer sends only an `externalLeadId`, `websiteUrl`, and optional
+`locale`. Do not add contact fields or browser-direct submission to the audit
+API.
 
 ## Product promise
 
@@ -14,68 +33,70 @@ lead form or an AI-generated PDF.
 > understand and potentially recommend the business, then identify what to fix
 > first.
 
-The product measures readiness separately from observed platform visibility.
-Never claim that a deterministic site audit proves ranking or placement inside
+The service measures readiness separately from observed platform visibility.
+Never claim the deterministic audit proves ranking or placement inside
 ChatGPT, Gemini, Claude, or another answer platform.
 
-## Current state
+## Current implementation
 
-- The landing page, intake API, homepage inspector, scoring engine, D1
-  persistence, report route, attribution capture, and optional CRM webhook are
-  implemented.
-- The current audit is a synchronous, bounded homepage inspection.
-- `ARCHITECTURE.md` defines the production evolution into a durable multi-page
-  Cloudflare Workflow.
-- R2 is declared for future screenshots, crawl evidence, and exports but is not
-  yet written by the current homepage audit.
-- A language model is not required for the current evidence score. The planned
-  model adapter may explain collected facts but must never invent them.
+- `POST /api/v1/audits` authenticates a server integration and creates an
+  idempotent queued job.
+- A bound Cloudflare Workflow processes the job durably. Local and Sites
+  previews use `waitUntil` when that binding is absent.
+- The crawler inspects a small prioritized set of public pages.
+- Code calculates the versioned score. Workers AI is optional and may only
+  explain failed, stored evidence checks.
+- D1 stores job state and events; R2 stores the result evidence document.
+- `GET /api/v1/audits/{id}` exposes authenticated status.
+- `/reports/{token}` renders the private report.
+- Completion callbacks are signed with HMAC-SHA256.
+- Legacy MVP tables remain in the schema only to make migration
+  non-destructive; the new service does not write lead PII.
 
 ## Non-negotiable invariants
 
 1. Evidence is collected before narrative generation.
-2. Scores come from versioned rules and stored evidence.
-3. Personal information never appears in report URLs.
-4. Audit consent and marketing consent remain distinct.
-5. Every externally fetched redirect is revalidated.
-6. Fetches have strict time, size, scheme, and destination boundaries.
-7. A failed CRM notification must not destroy a completed report.
-8. Model/provider names are internal implementation details, not client-facing
-   marketing copy.
-9. Observed AI visibility must include platform, query, time, market, and
-   evidence; otherwise call it readiness.
-10. Changes to scoring require a new methodology version and regression
-    examples.
+2. Scores come from versioned rules, never a language model.
+3. Generated claims must cite known evidence keys.
+4. No name, email, mobile number, or consent data enters the new job contract.
+5. The integration is server-to-server; do not enable broad browser CORS.
+6. Every redirect is revalidated and every fetch is bounded.
+7. A callback failure must not destroy a completed report.
+8. Idempotency keys prevent duplicate jobs for retried submissions.
+9. Report URLs contain a random bearer token and no lead or domain data.
+10. Provider/model names stay out of client-facing report copy.
+11. Observed AI visibility requires platform, query, time, market, and captured
+    evidence; otherwise call the result readiness.
+12. Any scoring change requires a new methodology version and regression tests.
 
 ## Important paths
 
-- `app/page.tsx` — public acquisition page
-- `app/components/AuditForm.tsx` — lead capture and attribution
-- `app/api/audits/route.ts` — intake and current synchronous orchestration
-- `app/audit/[token]/page.tsx` — private report
-- `lib/audit/` — URL safety, bounded fetch, scoring, shared result types
-- `db/schema.ts` — canonical relational schema
-- `db/repository.ts` — D1 boundary and event writes
-- `lib/integrations/crm.ts` — optional CRM delivery boundary
-- `ARCHITECTURE.md` — target architecture and migration logic
+- `worker/api.ts` — authenticated intake and status API
+- `worker/audit-workflow.ts` — durable orchestration
+- `worker/audit-processor.ts` — crawl, score, evidence, and callback boundaries
+- `lib/api/contracts.ts` — request validation and authentication
+- `lib/audit/` — URL safety, crawler, scoring, and narrative guardrails
+- `lib/integrations/callback.ts` — signed completion delivery
+- `app/reports/[token]/page.tsx` — private report
+- `db/schema.ts` and `db/repository.ts` — D1 schema and persistence boundary
+- `INTEGRATION.md` — marketer handoff contract
+- `ARCHITECTURE.md` — architecture and decision logic
 
-## Near-term roadmap
+## Next decisions
 
-1. Add Turnstile and per-IP/domain submission quotas.
-2. Move audit execution from the HTTP request into Cloudflare Workflows.
-3. Add robots/sitemap discovery and a 10-page crawl budget.
-4. Add Browser Rendering snapshots for desktop and mobile.
-5. Store screenshots and normalized evidence documents in R2.
-6. Add an evaluated narrative adapter with strict structured output.
-7. Add dated platform-specific visibility experiments.
-8. Add email/SMS delivery and booking-event ingestion.
-9. Build a reviewer screen for the first 50 production audits.
+1. Production hostname and ownership of the API key rotation process.
+2. Callback URL, retry/dead-letter operations, and CRM event mapping.
+3. Exact crawl authorization, robots policy, page budget, and retention period.
+4. Report-token expiry and consultation CTA destination.
+5. Score calibration set and approval threshold before paid-traffic launch.
+6. Whether to add Browser Rendering for JavaScript-heavy sites.
+7. Whether platform-specific observed visibility tests belong in a later
+   separately disclosed product.
 
 ## Working conventions
 
-- Use `npm run build` after implementation changes.
+- Run `npm run build`, `npm run lint`, and `npm test` after implementation.
 - Run `npm run db:generate` after schema changes and inspect the SQL.
-- Keep Cloudflare bindings in `.openai/hosting.json`.
-- Keep hosted secrets out of that file and out of Git.
-- Prefer small pure functions in `lib/audit` for scoring and security logic.
-- Add evidence fixtures before changing score weights.
+- Keep deployment bindings in configuration and secrets outside Git.
+- Prefer small pure functions for scoring, validation, and signing.
+- Preserve legacy data unless a separately approved migration removes it.

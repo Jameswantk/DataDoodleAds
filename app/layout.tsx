@@ -15,27 +15,25 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "SignalFound | AI Visibility Audits",
+    default: "SignalFound Audit Engine",
     template: "%s | SignalFound",
   },
   description:
-    "Evidence-backed website audits for businesses that want to be understood and recommended by AI.",
+    "Authenticated website audit processing, evidence scoring, AI-assisted findings, and signed completion callbacks.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
   openGraph: {
-    title: "Can AI find, understand and recommend your business?",
-    description:
-      "Get an evidence-backed AI visibility readiness audit for your website.",
+    title: "SignalFound Audit Engine",
+    description: "Evidence in. Actionable audit out.",
     type: "website",
     images: ["/og.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Can AI recommend your business?",
-    description:
-      "See your website's AI visibility readiness score and priority fixes.",
+    title: "SignalFound Audit Engine",
+    description: "Evidence in. Actionable audit out.",
     images: ["/og.png"],
   },
 };

@@ -6,6 +6,10 @@ import type {
 } from "./types";
 import type { HomepageSnapshot } from "./inspect";
 
+export type ScoringContext = {
+  pagesAudited?: AuditResult["pagesAudited"];
+};
+
 function match(html: string, expression: RegExp) {
   return expression.test(html);
 }
@@ -25,7 +29,10 @@ function check(
   return { key, label, passed, weight, points: passed ? weight : 0, evidence };
 }
 
-export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
+export function scoreHomepage(
+  snapshot: HomepageSnapshot,
+  context: ScoringContext = {},
+): AuditResult {
   const html = snapshot.html;
   const title = capture(html, /<title[^>]*>([\s\S]*?)<\/title>/i);
   const description = capture(
@@ -217,7 +224,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
 
   const findingTemplates: Record<
     string,
-    Omit<Finding, "evidence">
+    Omit<Finding, "evidence" | "evidenceKeys">
   > = {
     "structured-data": {
       priority: "High",
@@ -281,9 +288,14 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
     .filter((item) => !item.passed && findingTemplates[item.key])
     .sort((a, b) => b.weight - a.weight)
     .slice(0, 5)
-    .map((item) => ({ ...findingTemplates[item.key], evidence: item.evidence }));
+    .map((item) => ({
+      ...findingTemplates[item.key],
+      evidence: item.evidence,
+      evidenceKeys: [item.key],
+    }));
 
   return {
+    analysisMode: "rules-only",
     auditedAt: new Date().toISOString(),
     categories,
     checks,
@@ -291,6 +303,10 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
     findings,
     homepageTitle: title,
     methodologyVersion: "homepage-readiness-v1",
+    narrativeModel: null,
+    pagesAudited:
+      context.pagesAudited ??
+      [{ status: snapshot.status, title, url: snapshot.finalUrl }],
     score,
     summary:
       score >= 80

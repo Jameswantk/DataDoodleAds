@@ -48,7 +48,7 @@ export async function fetchHomepage(startUrl: string): Promise<HomepageSnapshot>
       headers: {
         accept: "text/html,application/xhtml+xml",
         "user-agent":
-          "SignalFound-Audit/0.1 (+https://signalfound.example/audit-crawler)",
+          "SignalFound-Audit/0.2 (+https://github.com/Jameswantk/DataDoodleAds)",
       },
       redirect: "manual",
       signal: AbortSignal.timeout(12_000),

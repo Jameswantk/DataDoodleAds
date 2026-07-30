@@ -1,26 +1,52 @@
-# SignalFound AI Visibility Audit
+# SignalFound Audit Engine
 
-An evidence-first lead acquisition application for complimentary AI visibility
-audits. It captures an attributed lead, inspects the submitted public homepage,
-calculates a transparent readiness score, stores the result, and returns a
-private report URL.
+A standalone, evidence-first website audit service. A marketer-owned landing
+page submits a website and an external lead reference to this service. The
+service validates and crawls the public website, calculates a transparent
+readiness score, optionally uses AI to explain verified findings, publishes a
+private report, and notifies the marketer's backend.
 
-## What is implemented
+This repository does **not** own the ads, landing page, contact form, consent,
+email, mobile number, or CRM lead record.
 
-- Four-field lead form with separate audit and marketing consent
-- UTM, Meta click, campaign, ad-set, and ad attribution capture
+## Implemented
+
+- Bearer-authenticated, idempotent server-to-server intake API
+- Minimal input contract: external lead ID, website URL, and optional locale
 - Public-URL validation and redirect revalidation
-- Bounded homepage fetch with content-type, size, and timeout controls
-- Versioned 100-point deterministic scoring methodology
-- D1-backed leads, audits, and append-only audit events
-- High-entropy report URLs with no personal data in the address
-- Personalized, evidence-backed report UI
-- Optional outbound CRM webhook
-- Cloudflare Sites/Workers-compatible build
-- D1 and R2 declarations for hosted deployment
+- Bounded, prioritized multi-page crawl
+- Versioned deterministic 100-point score
+- Optional Workers AI narrative constrained to failed evidence checks
+- Durable Cloudflare Workflow path with a local/Sites `waitUntil` fallback
+- D1 job state and append-only operational events
+- R2 evidence snapshots
+- Private, unguessable report URLs
+- HMAC-signed completion callback with retry-safe event IDs
+- No new storage of contact names, emails, or mobile numbers
 
-The initial implementation deliberately measures **readiness**, not a fabricated
-universal ranking in ChatGPT, Gemini, or Claude.
+The audit measures **website readiness**, not a guaranteed ranking inside
+ChatGPT, Gemini, Claude, or any other answer platform.
+
+## API quick start
+
+```bash
+curl -X POST "https://audit.example.com/api/v1/audits" \
+  -H "Authorization: Bearer $AUDIT_API_KEY" \
+  -H "Idempotency-Key: crm-lead-123-audit-v1" \
+  -H "Content-Type: application/json" \
+  --data '{
+    "externalLeadId": "crm-lead-123",
+    "websiteUrl": "https://example.com",
+    "locale": "en-MY"
+  }'
+```
+
+The response is `202 Accepted` for a new job and includes a status URL. Sending
+the same idempotency key and payload safely returns the existing job. A
+completed job contains its private report URL.
+
+See [INTEGRATION.md](./INTEGRATION.md) for the full handoff contract and
+[openapi.yaml](./openapi.yaml) for the machine-readable API definition.
 
 ## Local development
 
@@ -28,13 +54,13 @@ Requirements: Node.js 22.13 or newer.
 
 ```bash
 npm install
+copy .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`.
-
-Create `.env.local` from `.env.example` only when testing optional integrations.
-Do not commit secrets.
+Set `AUDIT_API_KEY` in `.env.local`. Local development uses the Cloudflare
+emulator and runs processing with `waitUntil` when a Workflow binding is not
+present.
 
 ## Validation
 
@@ -43,41 +69,48 @@ npm run lint
 npm test
 ```
 
-`npm test` performs a production build and verifies the rendered product shell.
+After schema changes:
 
-## Data model
+```bash
+npm run db:generate
+```
 
-- `leads`: contact information, consent timestamps, attribution
-- `audits`: private token, state, normalized URL, score, serialized evidence
-- `audit_events`: append-only funnel and operational events
+## Cloudflare deployment
 
-The source schema lives in `db/schema.ts`; generated migrations live in
-`drizzle/`.
+The intended production stack is Workers/Sites, D1, R2, Workflows, and
+optionally Workers AI. Copy the bindings from
+[wrangler.example.jsonc](./wrangler.example.jsonc) into the production
+Wrangler configuration, provision real D1/R2 resources, and set secrets rather
+than committing them.
 
-## Deployment modes
+Required secret:
 
-1. **Cloudflare-first** — Workers/Sites, D1, R2, Workflows/Queues and Browser
-   Rendering.
-2. **Local development** — Miniflare plus local browser tooling.
-3. **Hybrid compute** — Cloudflare owns intake and reports while an external or
-   local pull consumer performs browser-heavy crawling or open-weight inference.
+- `AUDIT_API_KEY`
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the complete system design and
-[MEMORY.md](./MEMORY.md) for durable project context.
+Required for callbacks:
 
-## Before production advertising
+- `AUDIT_CALLBACK_URL`
+- `AUDIT_CALLBACK_SIGNING_SECRET`
 
-- Replace the placeholder brand/contact values.
-- Add privacy notice and terms URLs approved for the target markets.
-- Configure Turnstile and submission rate limiting.
-- Move the synchronous homepage inspection into a Workflow.
-- Connect the real CRM and booking destination.
-- Configure Browser Rendering for mobile/desktop evidence.
-- Add email/SMS delivery.
-- Run security testing focused on SSRF, redirects, quotas, and abuse.
-- Manually review and calibrate the first 50 reports.
+Optional:
+
+- `WORKERS_AI_MODEL`
+- `REPORT_CTA_URL`
+- `REPORT_CTA_LABEL`
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for system logic and
+[MEMORY.md](./MEMORY.md) for durable scope decisions.
+
+## Production gates
+
+- Add DNS-resolution and egress enforcement against private destinations.
+- Apply rate and concurrency limits per integration key and domain.
+- Confirm crawl authorization, robots policy, retention, and deletion terms.
+- Calibrate the scoring rules against a manually reviewed audit set.
+- Add alerting and a dead-letter recovery path for exhausted callbacks.
+- Keep report tokens private and define their expiry/revocation policy.
 
 ## License
 
-Private commercial project. Add an explicit license before publishing the
-repository outside your organization.
+Private commercial project. Add an explicit license before making the
+repository public.

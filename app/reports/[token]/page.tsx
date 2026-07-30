@@ -1,9 +1,20 @@
-import { notFound } from "next/navigation";
+import { env } from "cloudflare:workers";
 import Link from "next/link";
-import { ensureDatabase, getAuditByToken, recordReportView } from "@/db/repository";
+import { notFound } from "next/navigation";
+import {
+  ensureDatabase,
+  getAuditJobByToken,
+  recordReportView,
+} from "@/db/repository";
 
 type PageProps = {
   params: Promise<{ token: string }>;
+};
+
+type ReportEnv = {
+  DB?: D1Database;
+  REPORT_CTA_LABEL?: string;
+  REPORT_CTA_URL?: string;
 };
 
 function formatDate(value: string) {
@@ -17,8 +28,10 @@ export default async function AuditReport({ params }: PageProps) {
   const { token } = await params;
   if (!/^[a-f0-9]{48}$/.test(token)) notFound();
 
-  await ensureDatabase();
-  const audit = await getAuditByToken(token);
+  const runtimeEnv = env as unknown as ReportEnv;
+  if (!runtimeEnv.DB) notFound();
+  await ensureDatabase(runtimeEnv.DB);
+  const audit = await getAuditJobByToken(runtimeEnv.DB, token);
   if (!audit) notFound();
 
   if (audit.status !== "completed" || !audit.result) {
@@ -33,17 +46,16 @@ export default async function AuditReport({ params }: PageProps) {
           </h1>
           <p>
             {audit.status === "failed"
-              ? "Please reply to the audit email or submit the website again."
-              : "Refresh this private page shortly."}
+              ? "The marketer’s system has received the failure status and can request a retry."
+              : "This private page will show the completed report shortly."}
           </p>
-          <Link href="/">Return to SignalFound</Link>
         </section>
       </main>
     );
   }
 
-  await recordReportView(audit.id);
-  const { result } = audit;
+  await recordReportView(runtimeEnv.DB, audit.id);
+  const result = audit.result;
   const domain = new URL(result.finalUrl).hostname.replace(/^www\./, "");
 
   return (
@@ -63,8 +75,19 @@ export default async function AuditReport({ params }: PageProps) {
           <p className="report-domain">{domain}</p>
           <h1>Your AI visibility readiness audit.</h1>
           <p className="report-summary">{result.summary}</p>
+          <div className="report-badges">
+            <span>{result.pagesAudited.length} pages inspected</span>
+            <span>
+              {result.analysisMode === "workers-ai"
+                ? "AI-assisted explanation"
+                : "Evidence-rule explanation"}
+            </span>
+          </div>
         </div>
-        <div className="score-dial" aria-label={`Readiness score ${result.score} out of 100`}>
+        <div
+          className="score-dial"
+          aria-label={`Readiness score ${result.score} out of 100`}
+        >
           <strong>{result.score}</strong>
           <span>/ 100</span>
           <small>Readiness score</small>
@@ -96,14 +119,14 @@ export default async function AuditReport({ params }: PageProps) {
           <p className="eyebrow dark">Priority roadmap</p>
           <h2>What to improve first</h2>
           <p>
-            Every finding below is linked to evidence observed on the audited
-            homepage.
+            Every recommendation is anchored to evidence collected from the
+            audited website.
           </p>
         </div>
         <div className="findings-list">
           {result.findings.length ? (
             result.findings.map((finding, index) => (
-              <article className="finding" key={finding.title}>
+              <article className="finding" key={`${finding.title}-${index}`}>
                 <div className="finding-index">
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <em>{finding.priority}</em>
@@ -127,10 +150,10 @@ export default async function AuditReport({ params }: PageProps) {
           ) : (
             <article className="finding">
               <div>
-                <h3>No critical homepage gaps were detected.</h3>
+                <h3>No critical crawl-readiness gaps were detected.</h3>
                 <p>
-                  The next step is deeper multi-page coverage and controlled
-                  visibility testing across answer platforms.
+                  A deeper consultation can focus on topic coverage and dated
+                  platform-specific visibility experiments.
                 </p>
               </div>
             </article>
@@ -140,31 +163,29 @@ export default async function AuditReport({ params }: PageProps) {
 
       <section className="method-section">
         <div>
-          <p className="eyebrow">How to read this</p>
-          <h2>A readiness score—not a fabricated ranking.</h2>
+          <p className="eyebrow">Methodology</p>
+          <h2>A readiness assessment—not a fabricated ranking.</h2>
         </div>
         <p>
           This report evaluates observable technical, content, trust, and
-          conversion signals on the public homepage. It does not claim a
-          permanent position in ChatGPT, Gemini, Claude, or any other platform.
-          Platform visibility must be measured separately with dated,
-          controlled queries.
+          conversion signals. It does not claim a permanent position in
+          ChatGPT, Gemini, Claude, or another answer platform. Platform
+          visibility requires separate dated, controlled tests.
         </p>
       </section>
 
-      <section className="report-cta">
-        <div>
-          <p className="eyebrow">Complimentary consultation</p>
-          <h2>Turn these findings into a visibility roadmap.</h2>
-        </div>
-        <a
-          href={`mailto:hello@signalfound.example?subject=${encodeURIComponent(
-            `AI visibility consultation for ${domain}`,
-          )}`}
-        >
-          Discuss this audit <span aria-hidden="true">→</span>
-        </a>
-      </section>
+      {runtimeEnv.REPORT_CTA_URL ? (
+        <section className="report-cta">
+          <div>
+            <p className="eyebrow">Next step</p>
+            <h2>Turn the findings into an implementation plan.</h2>
+          </div>
+          <a href={runtimeEnv.REPORT_CTA_URL}>
+            {runtimeEnv.REPORT_CTA_LABEL || "Discuss this audit"}
+            <span aria-hidden="true">→</span>
+          </a>
+        </section>
+      ) : null}
 
       <footer className="report-footer">
         <span>Method: {result.methodologyVersion}</span>
