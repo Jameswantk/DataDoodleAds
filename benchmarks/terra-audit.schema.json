@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "site",
+    "industry",
+    "verdict",
+    "scores",
+    "strengths",
+    "findings",
+    "whatsappConversationHook",
+    "caveats"
+  ],
+  "properties": {
+    "site": {
+      "type": "string"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visualTrust",
+        "conversionClarity",
+        "mobileExperience",
+        "aiDiscoverability",
+        "overall"
+      ],
+      "properties": {
+        "visualTrust": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "conversionClarity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "mobileExperience": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "aiDiscoverability": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "overall": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "strengths": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 240
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "priority",
+          "title",
+          "observation",
+          "evidence",
+          "businessImpact",
+          "recommendation",
+          "confidence"
+        ],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "observation": {
+            "type": "string",
+            "maxLength": 320
+          },
+          "evidence": {
+            "type": "string",
+            "maxLength": 320
+          },
+          "businessImpact": {
+            "type": "string",
+            "maxLength": 360
+          },
+          "recommendation": {
+            "type": "string",
+            "maxLength": 420
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          }
+        }
+      }
+    },
+    "whatsappConversationHook": {
+      "type": "string",
+      "maxLength": 420
+    },
+    "caveats": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 240
+      }
+    }
+  }
+}

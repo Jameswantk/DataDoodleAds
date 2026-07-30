@@ -42,3 +42,5 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/.playwright-cli/
+/output/playwright/terra-benchmark/

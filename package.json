@@ -12,7 +12,8 @@
     "test": "npm run typecheck && npm run build && tsx --test tests/audit-logic.test.ts tests/api-contract.test.ts tests/callback.test.ts tests/narrative.test.ts && node --test tests/product-source.test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "benchmark:terra:inputs": "tsx scripts/generate-terra-benchmark-inputs.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
