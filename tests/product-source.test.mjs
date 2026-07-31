@@ -47,6 +47,8 @@ test("private report presents an evidence-led consultation offer", () => {
   assert.match(reportSource, /Evidence-backed assessment/);
   assert.match(reportSource, /Strong foundation/);
   assert.match(reportSource, /A maturity stage—not a grade/);
+  assert.match(reportSource, /Rendered desktop\/mobile/);
+  assert.match(reportSource, /Structural readiness/);
   assert.doesNotMatch(reportSource, /\/ 100/);
   assert.doesNotMatch(reportSource, /guaranteed ranking/i);
   assert.doesNotMatch(reportSource, /we are the best/i);

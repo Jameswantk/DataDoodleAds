@@ -90,21 +90,38 @@ export async function fetchHomepage(startUrl: string): Promise<HomepageSnapshot>
   let currentUrl = startUrl;
 
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
-    const response = await fetch(currentUrl, {
-      headers: {
-        accept: "text/html,application/xhtml+xml",
-        "user-agent":
-          "SignalFound-Audit/0.2 (+https://github.com/Jameswantk/DataDoodleAds)",
-      },
-      redirect: "manual",
-      signal: AbortSignal.timeout(12_000),
-    });
+    let response: Response;
+    try {
+      response = await fetch(currentUrl, {
+        headers: {
+          accept: "text/html,application/xhtml+xml",
+          "user-agent":
+            "SignalFound-Audit/0.2 (+https://github.com/Jameswantk/DataDoodleAds)",
+        },
+        redirect: "manual",
+        signal: AbortSignal.timeout(12_000),
+      });
+    } catch (error) {
+      if (
+        (error instanceof Error &&
+          ["AbortError", "TimeoutError"].includes(error.name)) ||
+        (error instanceof Error && /aborted|timed? ?out/i.test(error.message))
+      ) {
+        throw new Error("FETCH_TIMEOUT");
+      }
+      throw error;
+    }
 
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       if (!location) throw new Error("INVALID_REDIRECT");
       currentUrl = isSafeRedirect(new URL(location, currentUrl).toString());
       continue;
+    }
+
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`HOMEPAGE_HTTP_${response.status}`);
     }
 
     const contentType = response.headers.get("content-type") ?? "";

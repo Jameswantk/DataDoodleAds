@@ -5,6 +5,7 @@ import { compactAuditEvidence } from "../lib/audit/evidence.ts";
 import {
   compactHtml,
   contentFingerprint,
+  fetchHomepage,
 } from "../lib/audit/inspect.ts";
 import { scoreHomepage } from "../lib/audit/score.ts";
 import { normalizePublicUrl } from "../lib/audit/url.ts";
@@ -133,6 +134,23 @@ test("compacts large script payloads without losing audit-relevant markup", asyn
   assert.match(compacted, /Visible service heading/);
   assert.doesNotMatch(compacted, /x{100}/);
   assert.equal(await contentFingerprint(compacted), await contentFingerprint(compacted));
+});
+
+test("does not turn a blocked homepage into an insulting low score", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response("<html><body>Forbidden</body></html>", {
+      headers: { "content-type": "text/html" },
+      status: 403,
+    });
+  try {
+    await assert.rejects(
+      () => fetchHomepage("https://example.com/"),
+      /HOMEPAGE_HTTP_403/,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("compact evidence and cache keys bound repeated model work", () => {

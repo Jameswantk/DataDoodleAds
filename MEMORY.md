@@ -51,6 +51,11 @@ ChatGPT, Gemini, Claude, or another answer platform.
   more than three failed, stored evidence checks in one call.
 - D1 caches completed results by URL, content fingerprint, locale,
   methodology, narrative version, and model for 14 days by default.
+- Non-success or timed-out homepages fail as `Needs verification`; they are
+  never converted into low prospect scores.
+- The 2026-07-31 outbound-directory backtest covers 21 additional companies
+  across seven industries. Three structurally perfect results required a
+  rendered spot-check; two still had meaningful visual opportunities.
 - D1 stores job state and events; R2 stores the result evidence document.
 - `GET /api/v1/audits/{id}` exposes authenticated status.
 - `/reports/{token}` renders the private report.
@@ -79,6 +84,9 @@ ChatGPT, Gemini, Claude, or another answer platform.
     second generation call repairing the response.
 15. Rendered aesthetics and observed answer-platform visibility remain
     separately disclosed stages until their evidence collectors exist.
+16. A deterministic 100 means no rule gap was detected. It must never be
+    presented as proof that the design, customer journey, or AI visibility
+    cannot be improved.
 
 ## Important paths
 

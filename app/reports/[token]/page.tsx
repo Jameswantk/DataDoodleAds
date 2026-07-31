@@ -38,7 +38,7 @@ function formatDate(value: string) {
 
 function executiveHeading(score: number) {
   if (score >= 80) {
-    return "A strong foundation. Now make it easier to discover, trust and contact.";
+    return "A strong structural foundation. Now refine how it looks, persuades and converts.";
   }
   if (score >= 60) {
     return "Your website is understandable. The opportunity is a clearer path to discovery and enquiry.";
@@ -127,25 +127,25 @@ export default async function AuditReport({ params }: PageProps) {
           <h1>{executiveHeading(result.score)}</h1>
           <p className="report-summary">{result.summary}</p>
           <p className="report-perspective">
-            We assessed how prospective customers, traditional search systems
-            and AI assistants can understand, trust and act on your public
-            website.
+            This complimentary stage assesses crawlable structure, public
+            content and visible conversion signals. Rendered desktop/mobile
+            presentation and live AI-platform inclusion require the next review.
           </p>
           <div className="report-badges">
             <span>{result.pagesAudited.length} pages inspected</span>
             <span>Evidence-backed assessment</span>
-            <span>Human, search &amp; AI readiness</span>
+            <span>Structure, content &amp; conversion signals</span>
           </div>
         </div>
         <div
           className="stage-card"
-          aria-label={`Growth readiness stage: ${readinessStage(result.score)}`}
+          aria-label={`Structural readiness stage: ${readinessStage(result.score)}`}
         >
-          <small>Growth readiness</small>
+          <small>Structural readiness</small>
           <strong>{readinessStage(result.score)}</strong>
           <p>
-            A maturity stage—not a grade. It reflects the current foundation
-            and where focused improvements can create the next opportunity.
+            A maturity stage—not a grade. It reflects the crawlable foundation,
+            not a completed visual or live-platform visibility test.
           </p>
         </div>
       </section>
@@ -228,8 +228,9 @@ export default async function AuditReport({ params }: PageProps) {
               <div>
                 <h3>No critical crawl-readiness gaps were detected.</h3>
                 <p>
-                  A deeper consultation can focus on topic coverage, conversion
-                  detail and dated platform-specific visibility experiments.
+                  The next useful step is a rendered desktop/mobile review of
+                  visual trust and conversion clarity, followed by dated
+                  platform-specific visibility experiments where appropriate.
                 </p>
               </div>
             </article>

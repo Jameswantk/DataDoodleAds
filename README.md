@@ -68,7 +68,12 @@ present.
 ```bash
 npm run lint
 npm test
+npm run benchmark:outbound
 ```
+
+The outbound benchmark parses a stratified sample from the live prospect
+directory, runs deterministic audits, preserves verification failures, and
+writes the dated Markdown/JSON evidence under `benchmarks/`.
 
 After schema changes:
 

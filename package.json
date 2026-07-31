@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
+    "benchmark:outbound": "tsx scripts/backtest-outbound-samples.ts",
     "benchmark:terra:inputs": "tsx scripts/generate-terra-benchmark-inputs.ts"
   },
   "dependencies": {
