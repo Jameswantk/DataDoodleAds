@@ -11,9 +11,13 @@ flowchart LR
   CRM -->|"Bearer key + idempotency key"| API["Audit API"]
   API --> D1[("D1 jobs")]
   API --> WF["Cloudflare Workflow"]
-  WF --> CRAWL["Bounded crawler"]
+  WF --> HOME["Fetch homepage + fingerprint"]
+  HOME --> CACHE{"Fresh cache hit?"}
+  CACHE -->|"No"| CRAWL["Bounded crawler"]
+  CACHE -->|"Yes"| D1
   CRAWL --> RULES["Versioned score"]
   RULES --> AI["Evidence-grounded narrative"]
+  AI --> CACHE
   AI --> R2[("R2 evidence")]
   AI --> D1
   D1 --> REPORT["Private report"]
@@ -73,14 +77,22 @@ same-origin service, product, about, case-study, FAQ, contact, and location
 pages. Each response has scheme, redirect, content-type, timeout, and size
 limits.
 
-`homepage-readiness-v1` totals 100 points:
+`site-readiness-v2` totals 100 points:
 
 - technical access: 40
 - answer readiness: 35
 - trust and conversion: 25
 
-Despite its historical methodology name, the scoring input may combine the
-bounded pages into one evidence corpus and records `pagesAudited`.
+Homepage-only checks such as the primary heading, canonical, robots directive,
+viewport, language, contact paths, CTA, and internal navigation are calculated
+only from the submitted page. Service, location, FAQ, proof, and about evidence
+may use the bounded site corpus. This prevents a secondary page from masking a
+homepage defect. Same-origin absolute and relative links are both recognized.
+
+Responses are bounded at 3 MB. Large builder HTML is compacted before parsing
+by removing non-evidence scripts, styles, SVG, templates, images, comments, and
+noisy attributes. If safe evidence still cannot be collected, the audit fails
+instead of manufacturing a low score.
 
 Every check has a stable key, weight, pass/fail result, and evidence statement.
 Changing weights or pass criteria requires a new methodology version.
@@ -88,12 +100,30 @@ Changing weights or pass criteria requires a new methodology version.
 ## AI boundary
 
 AI does not crawl and does not calculate the score. The optional Workers AI
-adapter receives the score categories and failed evidence checks only. Its
-structured response is accepted only when every finding cites a failed check
-key from the input. Invalid output or model failure falls back to deterministic
-rules-only findings.
+adapter receives a compact evidence object: category totals, at most six failed
+checks, at most three strengths, and a page count. It returns no more than three
+findings. Its structured response is accepted only when every finding cites a
+failed check key from the input and contains complete bounded sentences.
+Invalid or truncated output falls back immediately to deterministic rules-only
+findings; it does not trigger a second model call.
 
 Website content is treated as untrusted data, not as instructions.
+
+The production Worker does not yet capture rendered desktop/mobile screenshots
+or run Terra/Codex. Terra remains a local benchmark option. A browser-capable
+worker can be added later for visual evidence without changing the scoring or
+CRM contract. Live answer-platform observations are a later, separate stage for
+engaged leads and must not be represented as part of this readiness score.
+
+## Cache and cost boundary
+
+The homepage is fetched and compacted before analysis. A SHA-256 content
+fingerprint is combined with locale, methodology version, narrative version,
+and model identifier. An unexpired D1 cache hit skips the secondary crawl and
+AI generation. The default lifetime is 14 days and can be configured from 1 to
+30 days with `AUDIT_CACHE_TTL_DAYS`. A scoring, prompt, locale, model, or site
+homepage content change automatically produces a cache miss. Changes limited
+to secondary pages age out at the configured cache expiry.
 
 ## API and callback trust
 
@@ -112,7 +142,8 @@ See [INTEGRATION.md](./INTEGRATION.md) for exact payloads.
 
 `audit_jobs` stores external references, normalized URL, state, score, result
 JSON, callback delivery state, and timestamps. `audit_service_events` records
-state and delivery events. R2 stores `audits/{auditId}/result.json`.
+state and delivery events. `audit_result_cache` stores fingerprinted completed
+results and expiry timestamps. R2 stores `audits/{auditId}/result.json`.
 
 Legacy `leads`, `audits`, and `audit_events` tables are retained only to avoid a
 destructive migration from the earlier landing-page MVP. The new API never

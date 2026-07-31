@@ -30,6 +30,7 @@
     }
   ],
   "vars": {
+    "AUDIT_CACHE_TTL_DAYS": "14",
     "WORKERS_AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     "REPORT_CTA_LABEL": "Book a consultation"
   }

@@ -117,3 +117,24 @@ export const auditServiceEvents = sqliteTable(
     index("audit_service_events_occurred_at_idx").on(table.occurredAt),
   ],
 );
+
+export const auditResultCache = sqliteTable(
+  "audit_result_cache",
+  {
+    cacheKey: text("cache_key").primaryKey(),
+    normalizedUrl: text("normalized_url").notNull(),
+    contentFingerprint: text("content_fingerprint").notNull(),
+    analysisKey: text("analysis_key").notNull(),
+    resultJson: text("result_json").notNull(),
+    createdAt: text("created_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+  },
+  (table) => [
+    index("audit_result_cache_lookup_idx").on(
+      table.normalizedUrl,
+      table.contentFingerprint,
+      table.analysisKey,
+    ),
+    index("audit_result_cache_expires_at_idx").on(table.expiresAt),
+  ],
+);

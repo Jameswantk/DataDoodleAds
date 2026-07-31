@@ -10,6 +10,11 @@ const files = [
   "../MEMORY.md",
 ];
 
+const reportSource = await readFile(
+  new URL("../app/reports/[token]/page.tsx", import.meta.url),
+  "utf8",
+);
+
 test("repository is an audit service, not a marketer-owned lead form", async () => {
   const sources = await Promise.all(
     files.map((file) => readFile(new URL(file, import.meta.url), "utf8")),
@@ -26,4 +31,23 @@ test("repository is an audit service, not a marketer-owned lead form", async () 
   assert.doesNotMatch(combined, /name="mobile"/);
   assert.doesNotMatch(combined, /name="marketingConsent"/);
   assert.doesNotMatch(combined, /AuditForm/);
+});
+
+test("private report presents an evidence-led consultation offer", () => {
+  assert.match(reportSource, /What is already working/);
+  assert.match(reportSource, /The three moves we would prioritize/);
+  assert.match(
+    reportSource,
+    /More than conventional SEO or a cosmetic redesign/,
+  );
+  assert.match(
+    reportSource,
+    /easier to discover,\s+easier to trust and easier\s+to contact/i,
+  );
+  assert.match(reportSource, /Evidence-backed assessment/);
+  assert.match(reportSource, /Strong foundation/);
+  assert.match(reportSource, /A maturity stage—not a grade/);
+  assert.doesNotMatch(reportSource, /\/ 100/);
+  assert.doesNotMatch(reportSource, /guaranteed ranking/i);
+  assert.doesNotMatch(reportSource, /we are the best/i);
 });

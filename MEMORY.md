@@ -44,8 +44,13 @@ ChatGPT, Gemini, Claude, or another answer platform.
 - A bound Cloudflare Workflow processes the job durably. Local and Sites
   previews use `waitUntil` when that binding is absent.
 - The crawler inspects a small prioritized set of public pages.
-- Code calculates the versioned score. Workers AI is optional and may only
-  explain failed, stored evidence checks.
+- Code calculates `site-readiness-v2`: homepage-only evidence cannot be
+  satisfied by a secondary page, while selected business evidence is site-wide.
+- Large HTML is compacted within a 3 MB fetch bound before scoring.
+- Workers AI is optional and receives compact evidence only. It may explain no
+  more than three failed, stored evidence checks in one call.
+- D1 caches completed results by URL, content fingerprint, locale,
+  methodology, narrative version, and model for 14 days by default.
 - D1 stores job state and events; R2 stores the result evidence document.
 - `GET /api/v1/audits/{id}` exposes authenticated status.
 - `/reports/{token}` renders the private report.
@@ -68,6 +73,12 @@ ChatGPT, Gemini, Claude, or another answer platform.
 11. Observed AI visibility requires platform, query, time, market, and captured
     evidence; otherwise call the result readiness.
 12. Any scoring change requires a new methodology version and regression tests.
+13. A cache hit is valid only for the same content, locale, scoring
+    methodology, narrative version, and model.
+14. Model failure or invalid output uses deterministic copy; it never spends a
+    second generation call repairing the response.
+15. Rendered aesthetics and observed answer-platform visibility remain
+    separately disclosed stages until their evidence collectors exist.
 
 ## Important paths
 

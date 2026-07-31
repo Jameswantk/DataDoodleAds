@@ -15,8 +15,9 @@ email, mobile number, or CRM lead record.
 - Minimal input contract: external lead ID, website URL, and optional locale
 - Public-URL validation and redirect revalidation
 - Bounded, prioritized multi-page crawl
-- Versioned deterministic 100-point score
-- Optional Workers AI narrative constrained to failed evidence checks
+- Page-scoped, versioned deterministic 100-point score
+- Content-fingerprint result cache with a configurable 1-30 day lifetime
+- Optional Workers AI narrative constrained to three verified findings
 - Durable Cloudflare Workflow path with a local/Sites `waitUntil` fallback
 - D1 job state and append-only operational events
 - R2 evidence snapshots
@@ -95,6 +96,7 @@ Required for callbacks:
 Optional:
 
 - `WORKERS_AI_MODEL`
+- `AUDIT_CACHE_TTL_DAYS` (defaults to `14`; valid range `1`-`30`)
 - `REPORT_CTA_URL`
 - `REPORT_CTA_LABEL`
 
@@ -107,6 +109,10 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for system logic and
 - Apply rate and concurrency limits per integration key and domain.
 - Confirm crawl authorization, robots policy, retention, and deletion terms.
 - Calibrate the scoring rules against a manually reviewed audit set.
+- Add browser rendering and viewport screenshots for reliable visual assessment
+  of JavaScript-heavy sites.
+- Run separately disclosed ChatGPT, Gemini, or Claude query observations only
+  for qualified or engaged leads.
 - Add alerting and a dead-letter recovery path for exhausted callbacks.
 - Keep report tokens private and define their expiry/revocation policy.
 

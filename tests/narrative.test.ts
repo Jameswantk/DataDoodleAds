@@ -74,3 +74,40 @@ test("invalid AI output falls back to deterministic findings", async () => {
 
   assert.deepEqual(await addAiNarrative(fakeAi, scored, "en"), scored);
 });
+
+test("AI prompt and accepted output are bounded to three findings", async () => {
+  const scored = scoreHomepage({
+    finalUrl: "https://example.com/",
+    html: "<html><body>Example</body></html>",
+    status: 200,
+  });
+  const validKey = scored.checks.find((check) => !check.passed)?.key;
+  assert.ok(validKey);
+  const suppliedInputs: Record<string, unknown>[] = [];
+  const fakeAi = {
+    async run(_model: string, input: Record<string, unknown>) {
+      suppliedInputs.push(input);
+      return {
+        response: {
+          findings: Array.from({ length: 5 }, (_, index) => ({
+            evidenceKeys: [validKey],
+            impact: `Verified impact ${index + 1}.`,
+            recommendation: `Specific recommendation ${index + 1}.`,
+            title: `Finding ${index + 1}`,
+          })),
+        },
+      };
+    },
+  };
+
+  const narrated = await addAiNarrative(fakeAi, scored, "en-MY");
+  const suppliedInput = suppliedInputs[0];
+  assert.ok(suppliedInput);
+  const messages = suppliedInput.messages as
+    | Array<{ content?: string }>
+    | undefined;
+
+  assert.equal(narrated.findings.length, 3);
+  assert.equal(suppliedInput.max_tokens, 900);
+  assert.ok((messages?.[0]?.content?.length ?? Infinity) < 6_000);
+});

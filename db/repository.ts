@@ -28,6 +28,12 @@ export type AuditJob = {
   websiteUrl: string;
 };
 
+export type CachedAuditResult = {
+  createdAt: string;
+  expiresAt: string;
+  result: AuditResult;
+};
+
 function mapJob(row: D1ResultRow): AuditJob {
   return {
     callbackAttempts: Number(row.callback_attempts ?? 0),
@@ -82,6 +88,15 @@ export async function ensureDatabase(db: D1Database) {
       payload_json TEXT NOT NULL DEFAULT '{}',
       occurred_at TEXT NOT NULL
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS audit_result_cache (
+      cache_key TEXT PRIMARY KEY NOT NULL,
+      normalized_url TEXT NOT NULL,
+      content_fingerprint TEXT NOT NULL,
+      analysis_key TEXT NOT NULL,
+      result_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    )`),
     db.prepare(
       "CREATE UNIQUE INDEX IF NOT EXISTS audit_jobs_idempotency_key_uidx ON audit_jobs(idempotency_key)",
     ),
@@ -103,7 +118,78 @@ export async function ensureDatabase(db: D1Database) {
     db.prepare(
       "CREATE INDEX IF NOT EXISTS audit_service_events_occurred_at_idx ON audit_service_events(occurred_at)",
     ),
+    db.prepare(
+      "CREATE INDEX IF NOT EXISTS audit_result_cache_lookup_idx ON audit_result_cache(normalized_url, content_fingerprint, analysis_key)",
+    ),
+    db.prepare(
+      "CREATE INDEX IF NOT EXISTS audit_result_cache_expires_at_idx ON audit_result_cache(expires_at)",
+    ),
   ]);
+}
+
+export async function getCachedAuditResult(
+  db: D1Database,
+  normalizedUrl: string,
+  contentFingerprint: string,
+  analysisKey: string,
+): Promise<CachedAuditResult | null> {
+  const row = await db
+    .prepare(`SELECT result_json, created_at, expires_at
+      FROM audit_result_cache
+      WHERE normalized_url = ? AND content_fingerprint = ? AND analysis_key = ?
+        AND expires_at > ?
+      ORDER BY created_at DESC
+      LIMIT 1`)
+    .bind(
+      normalizedUrl,
+      contentFingerprint,
+      analysisKey,
+      new Date().toISOString(),
+    )
+    .first<D1ResultRow>();
+  if (!row || typeof row.result_json !== "string") return null;
+  try {
+    return {
+      createdAt: String(row.created_at),
+      expiresAt: String(row.expires_at),
+      result: JSON.parse(row.result_json) as AuditResult,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function putCachedAuditResult(
+  db: D1Database,
+  input: {
+    analysisKey: string;
+    cacheKey: string;
+    contentFingerprint: string;
+    expiresAt: string;
+    normalizedUrl: string;
+    result: AuditResult;
+  },
+) {
+  const createdAt = new Date().toISOString();
+  await db
+    .prepare(`INSERT INTO audit_result_cache (
+      cache_key, normalized_url, content_fingerprint, analysis_key,
+      result_json, created_at, expires_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(cache_key) DO UPDATE SET
+      result_json = excluded.result_json,
+      created_at = excluded.created_at,
+      expires_at = excluded.expires_at`)
+    .bind(
+      input.cacheKey,
+      input.normalizedUrl,
+      input.contentFingerprint,
+      input.analysisKey,
+      JSON.stringify(input.result),
+      createdAt,
+      input.expiresAt,
+    )
+    .run();
 }
 
 export type NewAuditJob = {

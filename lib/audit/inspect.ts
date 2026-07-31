@@ -1,6 +1,7 @@
 import { isSafeRedirect } from "./url";
 
-const MAX_HTML_BYTES = 750_000;
+const MAX_RESPONSE_BYTES = 3_000_000;
+const MAX_COMPACT_HTML_BYTES = 1_250_000;
 const MAX_REDIRECTS = 3;
 
 export type HomepageSnapshot = {
@@ -9,9 +10,54 @@ export type HomepageSnapshot = {
   status: number;
 };
 
+export function compactHtml(html: string) {
+  const compacted = html
+    .replace(
+      /<script\b(?![^>]*type=["']application\/ld\+json["'])[^>]*>[\s\S]*?<\/script>/gi,
+      " ",
+    )
+    .replace(/<(?:style|noscript|svg|template)\b[^>]*>[\s\S]*?<\/(?:style|noscript|svg|template)>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<img\b[^>]*>/gi, " ")
+    .replace(
+      /\s(?:class|id|style|srcset|sizes|loading|decoding|data-[\w:-]+|aria-describedby|aria-labelledby)=("[^"]*"|'[^']*')/gi,
+      "",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (new TextEncoder().encode(compacted).byteLength <= MAX_COMPACT_HTML_BYTES) {
+    return compacted;
+  }
+
+  const head = compacted.match(/<head\b[^>]*>[\s\S]*?<\/head>/i)?.[0] ?? "";
+  const body = compacted.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? compacted;
+  const meaningful = [
+    ...body.matchAll(
+      /<(?:a|address|article|button|dd|details|div|dl|dt|footer|h[1-6]|header|li|main|nav|p|section|summary)\b[^>]*>[\s\S]*?<\/(?:a|address|article|button|dd|details|div|dl|dt|footer|h[1-6]|header|li|main|nav|p|section|summary)>/gi,
+    ),
+  ]
+    .map((match) => match[0])
+    .join(" ");
+  const reduced = `<html>${head}<body>${meaningful || body}</body></html>`;
+  return new TextDecoder().decode(
+    new TextEncoder().encode(reduced).slice(0, MAX_COMPACT_HTML_BYTES),
+  );
+}
+
+export async function contentFingerprint(content: string) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(content),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
 async function readLimitedText(response: Response) {
   const declaredSize = Number(response.headers.get("content-length") ?? "0");
-  if (declaredSize > MAX_HTML_BYTES) {
+  if (declaredSize > MAX_RESPONSE_BYTES) {
     throw new Error("PAGE_TOO_LARGE");
   }
   if (!response.body) return "";
@@ -24,7 +70,7 @@ async function readLimitedText(response: Response) {
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_HTML_BYTES) {
+    if (total > MAX_RESPONSE_BYTES) {
       await reader.cancel();
       throw new Error("PAGE_TOO_LARGE");
     }
@@ -37,7 +83,7 @@ async function readLimitedText(response: Response) {
     joined.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(joined);
+  return compactHtml(new TextDecoder().decode(joined));
 }
 
 export async function fetchHomepage(startUrl: string): Promise<HomepageSnapshot> {

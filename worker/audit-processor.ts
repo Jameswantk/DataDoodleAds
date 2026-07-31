@@ -1,12 +1,21 @@
 import {
   completeAudit,
   failAudit,
+  getCachedAuditResult,
   getAuditJobById,
   markAuditProcessing,
+  putCachedAuditResult,
+  recordAuditEvent,
 } from "../db/repository";
 import { crawlSite } from "../lib/audit/crawl";
-import { addAiNarrative } from "../lib/audit/narrative";
-import { scoreHomepage } from "../lib/audit/score";
+import { contentFingerprint, fetchHomepage } from "../lib/audit/inspect";
+import {
+  addAiNarrative,
+  DEFAULT_WORKERS_AI_MODEL,
+  NARRATIVE_VERSION,
+} from "../lib/audit/narrative";
+import { analysisCacheKey, cacheTtlDays } from "../lib/audit/cache";
+import { METHODOLOGY_VERSION, scoreHomepage } from "../lib/audit/score";
 import { deliverCompletionCallback } from "../lib/integrations/callback";
 import type {
   AuditEnv,
@@ -22,16 +31,61 @@ export async function collectAuditResult(
   env: AuditEnv,
   params: AuditWorkflowParams,
 ) {
-  const crawl = await crawlSite(params.normalizedUrl);
-  const scored = scoreHomepage(crawl.combinedSnapshot, {
+  const homepage = await fetchHomepage(params.normalizedUrl);
+  const fingerprint = await contentFingerprint(homepage.html);
+  const model = env.AI
+    ? env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL
+    : "rules-only";
+  const analysisKey = `${METHODOLOGY_VERSION}:${params.locale}:${model}:${NARRATIVE_VERSION}`;
+  const cacheKey = analysisCacheKey(
+    params.locale,
+    `${model}:${NARRATIVE_VERSION}`,
+    fingerprint,
+  );
+  const cached = await getCachedAuditResult(
+    env.DB,
+    params.normalizedUrl,
+    fingerprint,
+    analysisKey,
+  );
+  if (cached) {
+    await recordAuditEvent(env.DB, params.auditId, "audit_cache_hit", {
+      cachedAt: cached.createdAt,
+      contentFingerprint: fingerprint,
+    });
+    return {
+      ...cached.result,
+      auditedAt: new Date().toISOString(),
+    };
+  }
+
+  const crawl = await crawlSite(params.normalizedUrl, undefined, homepage);
+  const scored = scoreHomepage(crawl.homepage, {
     pagesAudited: crawl.pagesAudited,
+    siteHtml: crawl.combinedSnapshot.html,
   });
-  return addAiNarrative(
+  const result = await addAiNarrative(
     env.AI,
     scored,
     params.locale,
     env.WORKERS_AI_MODEL,
   );
+  const expiresAt = new Date(
+    Date.now() + cacheTtlDays(env.AUDIT_CACHE_TTL_DAYS) * 86_400_000,
+  ).toISOString();
+  try {
+    await putCachedAuditResult(env.DB, {
+      analysisKey,
+      cacheKey,
+      contentFingerprint: fingerprint,
+      expiresAt,
+      normalizedUrl: params.normalizedUrl,
+      result,
+    });
+  } catch {
+    // Cache availability must never decide whether a completed audit succeeds.
+  }
+  return result;
 }
 
 export async function storeEvidence(

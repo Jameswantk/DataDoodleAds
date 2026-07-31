@@ -71,6 +71,7 @@ function candidateUrls(homepage: HomepageSnapshot, limit: number) {
 
 export type CrawlResult = {
   combinedSnapshot: HomepageSnapshot;
+  homepage: HomepageSnapshot;
   pages: HomepageSnapshot[];
   pagesAudited: AuditResult["pagesAudited"];
 };
@@ -78,8 +79,9 @@ export type CrawlResult = {
 export async function crawlSite(
   normalizedUrl: string,
   pageBudget = DEFAULT_PAGE_BUDGET,
+  suppliedHomepage?: HomepageSnapshot,
 ): Promise<CrawlResult> {
-  const homepage = await fetchHomepage(normalizedUrl);
+  const homepage = suppliedHomepage ?? await fetchHomepage(normalizedUrl);
   const urls = candidateUrls(homepage, Math.max(0, pageBudget - 1));
   const pages = [homepage];
 
@@ -101,6 +103,7 @@ export async function crawlSite(
       html: pages.map((page) => page.html).join("\n<!-- audit-page-boundary -->\n"),
       status: homepage.status,
     },
+    homepage,
     pages,
     pagesAudited: pages.map((page) => ({
       status: page.status,

@@ -6,6 +6,7 @@ import {
   getAuditJobByToken,
   recordReportView,
 } from "@/db/repository";
+import type { AuditResult, CheckResult } from "@/lib/audit/types";
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -17,11 +18,60 @@ type ReportEnv = {
   REPORT_CTA_URL?: string;
 };
 
+const STRENGTH_PRIORITY = [
+  "proof",
+  "contact",
+  "cta",
+  "structured-data",
+  "service-language",
+  "about",
+  "https",
+  "successful-response",
+];
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(value));
+}
+
+function executiveHeading(score: number) {
+  if (score >= 80) {
+    return "A strong foundation. Now make it easier to discover, trust and contact.";
+  }
+  if (score >= 60) {
+    return "Your website is understandable. The opportunity is a clearer path to discovery and enquiry.";
+  }
+  return "Important business facts are being left for visitors and machines to infer.";
+}
+
+function readinessStage(score: number) {
+  if (score >= 85) return "Strong foundation";
+  if (score >= 70) return "Established";
+  if (score >= 55) return "Clear opportunity";
+  return "Foundational opportunity";
+}
+
+function categoryStage(earned: number, maximum: number) {
+  const percentage = maximum > 0 ? (earned / maximum) * 100 : 0;
+  if (percentage >= 85) return "Strong";
+  if (percentage >= 70) return "Established";
+  if (percentage >= 55) return "Opportunity";
+  return "Priority";
+}
+
+function strongestChecks(result: AuditResult): CheckResult[] {
+  const rank = new Map(STRENGTH_PRIORITY.map((key, index) => [key, index]));
+  return result.checks
+    .filter((check) => check.passed)
+    .sort(
+      (a, b) =>
+        (rank.get(a.key) ?? STRENGTH_PRIORITY.length) -
+          (rank.get(b.key) ?? STRENGTH_PRIORITY.length) ||
+        b.weight - a.weight,
+    )
+    .slice(0, 4);
 }
 
 export default async function AuditReport({ params }: PageProps) {
@@ -38,16 +88,16 @@ export default async function AuditReport({ params }: PageProps) {
     return (
       <main className="report-shell">
         <section className="report-waiting">
-          <p className="eyebrow dark">Audit status</p>
+          <p className="eyebrow dark">Assessment status</p>
           <h1>
             {audit.status === "failed"
-              ? "We could not complete this audit."
+              ? "We could not complete this assessment."
               : "Your evidence is being assembled."}
           </h1>
           <p>
             {audit.status === "failed"
               ? "The marketer’s system has received the failure status and can request a retry."
-              : "This private page will show the completed report shortly."}
+              : "This private page will show the completed assessment shortly."}
           </p>
         </section>
       </main>
@@ -57,6 +107,7 @@ export default async function AuditReport({ params }: PageProps) {
   await recordReportView(runtimeEnv.DB, audit.id);
   const result = audit.result;
   const domain = new URL(result.finalUrl).hostname.replace(/^www\./, "");
+  const strengths = strongestChecks(result);
 
   return (
     <main className="report-shell">
@@ -67,30 +118,35 @@ export default async function AuditReport({ params }: PageProps) {
           </span>
           <span>SignalFound</span>
         </Link>
-        <span>Private audit · {formatDate(result.auditedAt)}</span>
+        <span>Private assessment · {formatDate(result.auditedAt)}</span>
       </header>
 
       <section className="report-hero">
         <div>
           <p className="report-domain">{domain}</p>
-          <h1>Your AI visibility readiness audit.</h1>
+          <h1>{executiveHeading(result.score)}</h1>
           <p className="report-summary">{result.summary}</p>
+          <p className="report-perspective">
+            We assessed how prospective customers, traditional search systems
+            and AI assistants can understand, trust and act on your public
+            website.
+          </p>
           <div className="report-badges">
             <span>{result.pagesAudited.length} pages inspected</span>
-            <span>
-              {result.analysisMode === "workers-ai"
-                ? "AI-assisted explanation"
-                : "Evidence-rule explanation"}
-            </span>
+            <span>Evidence-backed assessment</span>
+            <span>Human, search &amp; AI readiness</span>
           </div>
         </div>
         <div
-          className="score-dial"
-          aria-label={`Readiness score ${result.score} out of 100`}
+          className="stage-card"
+          aria-label={`Growth readiness stage: ${readinessStage(result.score)}`}
         >
-          <strong>{result.score}</strong>
-          <span>/ 100</span>
-          <small>Readiness score</small>
+          <small>Growth readiness</small>
+          <strong>{readinessStage(result.score)}</strong>
+          <p>
+            A maturity stage—not a grade. It reflects the current foundation
+            and where focused improvements can create the next opportunity.
+          </p>
         </div>
       </section>
 
@@ -99,9 +155,7 @@ export default async function AuditReport({ params }: PageProps) {
           <article key={category.key}>
             <div>
               <span>{category.label}</span>
-              <strong>
-                {category.earned}/{category.maximum}
-              </strong>
+              <strong>{categoryStage(category.earned, category.maximum)}</strong>
             </div>
             <div className="score-bar">
               <span
@@ -114,18 +168,40 @@ export default async function AuditReport({ params }: PageProps) {
         ))}
       </section>
 
+      <section className="strengths-section">
+        <div className="section-heading">
+          <p className="eyebrow dark">Existing advantages</p>
+          <h2>What is already working</h2>
+          <p>
+            The best improvements build on existing credibility. These are
+            verified strengths worth preserving as the website evolves.
+          </p>
+        </div>
+        <div className="strengths-grid">
+          {strengths.map((strength) => (
+            <article key={strength.key}>
+              <span aria-hidden="true">✓</span>
+              <div>
+                <h3>{strength.label}</h3>
+                <p>{strength.evidence}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="findings-section">
         <div className="section-heading">
           <p className="eyebrow dark">Priority roadmap</p>
-          <h2>What to improve first</h2>
+          <h2>The three moves we would prioritize</h2>
           <p>
-            Every recommendation is anchored to evidence collected from the
-            audited website.
+            Each recommendation connects a verified observation to the
+            customer journey, then sets out the implementation direction.
           </p>
         </div>
         <div className="findings-list">
           {result.findings.length ? (
-            result.findings.map((finding, index) => (
+            result.findings.slice(0, 3).map((finding, index) => (
               <article className="finding" key={`${finding.title}-${index}`}>
                 <div className="finding-index">
                   <span>{String(index + 1).padStart(2, "0")}</span>
@@ -136,11 +212,11 @@ export default async function AuditReport({ params }: PageProps) {
                   <p>{finding.impact}</p>
                   <dl>
                     <div>
-                      <dt>Evidence</dt>
+                      <dt>What we observed</dt>
                       <dd>{finding.evidence}</dd>
                     </div>
                     <div>
-                      <dt>Recommended move</dt>
+                      <dt>What we would change</dt>
                       <dd>{finding.recommendation}</dd>
                     </div>
                   </dl>
@@ -152,8 +228,8 @@ export default async function AuditReport({ params }: PageProps) {
               <div>
                 <h3>No critical crawl-readiness gaps were detected.</h3>
                 <p>
-                  A deeper consultation can focus on topic coverage and dated
-                  platform-specific visibility experiments.
+                  A deeper consultation can focus on topic coverage, conversion
+                  detail and dated platform-specific visibility experiments.
                 </p>
               </div>
             </article>
@@ -161,16 +237,56 @@ export default async function AuditReport({ params }: PageProps) {
         </div>
       </section>
 
+      <section className="approach-section">
+        <div className="section-heading">
+          <p className="eyebrow">Why a combined approach</p>
+          <h2>More than conventional SEO or a cosmetic redesign.</h2>
+          <p>
+            Keywords alone cannot repair a confusing customer journey. A
+            visual redesign alone does not ensure that search and AI systems
+            understand the business. We align the message, evidence, structure
+            and conversion path as one system.
+          </p>
+        </div>
+        <div className="approach-grid">
+          <article>
+            <span>01</span>
+            <h3>Discoverability</h3>
+            <p>
+              Make the business, services, expertise and locations easier for
+              search and AI systems to interpret.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Trust</h3>
+            <p>
+              Preserve the brand while strengthening the proof and clarity
+              prospective customers need to feel confident.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Conversion</h3>
+            <p>
+              Shorten the journey from first impression to a meaningful
+              enquiry, booking or WhatsApp conversation.
+            </p>
+          </article>
+        </div>
+      </section>
+
       <section className="method-section">
         <div>
-          <p className="eyebrow">Methodology</p>
-          <h2>A readiness assessment—not a fabricated ranking.</h2>
+          <p className="eyebrow">Our standard</p>
+          <h2>Specific enough to act on. Responsible enough to trust.</h2>
         </div>
         <p>
-          This report evaluates observable technical, content, trust, and
-          conversion signals. It does not claim a permanent position in
-          ChatGPT, Gemini, Claude, or another answer platform. Platform
-          visibility requires separate dated, controlled tests.
+          This assessment is grounded in observable technical, content, trust
+          and conversion evidence. It measures readiness rather than claiming
+          a permanent position in an answer platform. Dated, controlled
+          visibility testing can be added when actual platform appearance must
+          be verified.
         </p>
       </section>
 
@@ -178,10 +294,16 @@ export default async function AuditReport({ params }: PageProps) {
         <section className="report-cta">
           <div>
             <p className="eyebrow">Next step</p>
-            <h2>Turn the findings into an implementation plan.</h2>
+            <h2>Let us show you what we would change first.</h2>
+            <p>
+              In a short consultation, we will walk through the priority
+              improvements, explain the recommended sequence and show how the
+              website can become easier to discover, easier to trust and easier
+              to contact.
+            </p>
           </div>
           <a href={runtimeEnv.REPORT_CTA_URL}>
-            {runtimeEnv.REPORT_CTA_LABEL || "Discuss this audit"}
+            {runtimeEnv.REPORT_CTA_LABEL || "Discuss my assessment"}
             <span aria-hidden="true">→</span>
           </a>
         </section>
@@ -189,7 +311,7 @@ export default async function AuditReport({ params }: PageProps) {
 
       <footer className="report-footer">
         <span>Method: {result.methodologyVersion}</span>
-        <span>Audited URL: {result.finalUrl}</span>
+        <span>Assessed URL: {result.finalUrl}</span>
       </footer>
     </main>
   );

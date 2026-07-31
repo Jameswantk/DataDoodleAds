@@ -34,6 +34,7 @@ export interface AuditEnv {
   AUDIT_API_KEY?: string;
   AUDIT_CALLBACK_SIGNING_SECRET?: string;
   AUDIT_CALLBACK_URL?: string;
+  AUDIT_CACHE_TTL_DAYS?: string;
   AUDIT_WORKFLOW?: WorkflowBinding;
   DB: D1Database;
   EVIDENCE?: R2Bucket;
