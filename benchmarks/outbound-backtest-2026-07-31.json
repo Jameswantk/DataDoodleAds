@@ -1,0 +1,587 @@
+{
+  "generatedAt": "2026-07-31T04:11:34.605Z",
+  "methodologyVersion": "site-readiness-v2",
+  "results": [
+    {
+      "group": "Funeral",
+      "host": "80casket.com",
+      "name": "80殡仪服务 80 KLP Funeral Services",
+      "sourceMessage": "Hi 80殡仪服务 80 KLP Funeral Services team, James here. I took a look at http://www.80casket.com/. When someone asks ChatGPT, Gemini or Google AI for a funeral service in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 41/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 41,
+      "url": "http://www.80casket.com/",
+      "categoryStages": {
+        "Technical access": "Established",
+        "Answer readiness": "Opportunity",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 3428,
+      "failedChecks": [
+        "title",
+        "description",
+        "h1",
+        "structured-data",
+        "contact",
+        "cta"
+      ],
+      "finalUrl": "https://www.80casket.com/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Lead with one unambiguous primary heading",
+        "Make the next step unmistakable"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 62,
+      "readinessStage": "Clear opportunity",
+      "scoreDelta": 21
+    },
+    {
+      "group": "Funeral",
+      "host": "klfuneralservices.com",
+      "name": "KL FUNERAL SERVICES",
+      "sourceMessage": "Hi KL FUNERAL SERVICES team, James here. I took a look at http://www.klfuneralservices.com/. When someone asks ChatGPT, Gemini or Google AI for a funeral service in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 38/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 38,
+      "url": "http://www.klfuneralservices.com/",
+      "categoryStages": {
+        "Technical access": "Priority",
+        "Answer readiness": "Priority",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 300,
+      "failedChecks": [
+        "title",
+        "description",
+        "canonical",
+        "viewport",
+        "language",
+        "h1",
+        "structured-data",
+        "question-content"
+      ],
+      "finalUrl": "https://www.klfuneralservices.com/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Lead with one unambiguous primary heading",
+        "Improve the homepage summary"
+      ],
+      "pagesAudited": 5,
+      "readinessScore": 58,
+      "readinessStage": "Clear opportunity",
+      "scoreDelta": 20
+    },
+    {
+      "group": "Funeral",
+      "host": "nirvana.com.my",
+      "name": "Nirvana Memorial Center 富贵纪念馆 Official",
+      "sourceMessage": "Hi Nirvana Memorial Center 富贵纪念馆 Official team, James here. I took a look at https://www.nirvana.com.my/. When someone asks ChatGPT, Gemini or Google AI for a funeral service in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 46/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 46,
+      "url": "https://www.nirvana.com.my/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Established",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 24143,
+      "failedChecks": [
+        "description",
+        "structured-data"
+      ],
+      "finalUrl": "https://www.nirvana.com.my/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Improve the homepage summary"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 87,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 41
+    },
+    {
+      "group": "Pet Adjacent",
+      "host": "theavatarangels.com",
+      "name": "Avatar Angels",
+      "sourceMessage": "Hi Avatar Angels team, James here. I took a look at https://www.theavatarangels.com/?utm_source=google&utm_medium=wix_google_business_profile&utm_campaign=6802785819686985287. When someone asks ChatGPT, Gemini or Google AI for a pet groomer or boarder in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a Wix template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://www.theavatarangels.com/?utm_source=google&utm_medium=wix_google_business_profile&utm_campaign=6802785819686985287",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Opportunity",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 282,
+      "failedChecks": [
+        "title",
+        "h1",
+        "question-content",
+        "proof",
+        "about"
+      ],
+      "finalUrl": "https://www.theavatarangels.com/?utm_source=google&utm_medium=wix_google_business_profile&utm_campaign=6802785819686985287",
+      "findings": [
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 71,
+      "readinessStage": "Established",
+      "scoreDelta": 18
+    },
+    {
+      "group": "Pet Adjacent",
+      "host": "groomsbyarp.wasap.my",
+      "name": "Grooms By ARP",
+      "sourceMessage": "Hi Grooms By ARP team, James here. I took a look at https://groomsbyarp.wasap.my/. When someone asks ChatGPT, Gemini or Google AI for a pet groomer or boarder in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 38/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 38,
+      "url": "https://groomsbyarp.wasap.my/",
+      "categoryStages": {
+        "Technical access": "Established",
+        "Answer readiness": "Priority",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 82,
+      "failedChecks": [
+        "description",
+        "canonical",
+        "h1",
+        "structured-data",
+        "service-language",
+        "location-language",
+        "question-content",
+        "internal-links",
+        "contact",
+        "proof",
+        "about",
+        "cta"
+      ],
+      "finalUrl": "https://groomsbyarp.wasap.my/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof"
+      ],
+      "pagesAudited": 1,
+      "readinessScore": 31,
+      "readinessStage": "Foundational opportunity",
+      "scoreDelta": -7
+    },
+    {
+      "group": "Pet Adjacent",
+      "host": "letorogrooming.com.my",
+      "name": "Letoro Grooming | Happy Garden",
+      "sourceMessage": "Hi Letoro Grooming | Happy Garden team, James here. I took a look at http://www.letorogrooming.com.my/. When someone asks ChatGPT, Gemini or Google AI for a pet groomer or boarder in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 49/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 49,
+      "url": "http://www.letorogrooming.com.my/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Priority",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 434,
+      "failedChecks": [
+        "description",
+        "structured-data",
+        "question-content",
+        "internal-links",
+        "contact",
+        "proof",
+        "about"
+      ],
+      "finalUrl": "https://www.letorogrooming.com.my/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Give recommendation systems stronger proof",
+        "Make the next step unmistakable"
+      ],
+      "pagesAudited": 1,
+      "readinessScore": 60,
+      "readinessStage": "Clear opportunity",
+      "scoreDelta": 11
+    },
+    {
+      "group": "Law",
+      "host": "dwc.com.my",
+      "name": "Donny Wong & Co.",
+      "sourceMessage": "Hi Donny Wong & Co. team, James here. I took a look at http://www.dwc.com.my/. When someone asks ChatGPT, Gemini or Google AI for a lawyer in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a Wix template that stays invisible.",
+      "sourceScore": 53,
+      "url": "http://www.dwc.com.my/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Strong",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 511,
+      "failedChecks": [],
+      "finalUrl": "https://www.dwc.com.my/",
+      "findings": [],
+      "pagesAudited": 6,
+      "readinessScore": 100,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 47
+    },
+    {
+      "group": "Law",
+      "host": "wenjieco.com",
+      "name": "WenJie & Co. Law Firm | Kuala Lumpur Malaysia",
+      "sourceMessage": "Hi WenJie & Co. Law Firm | Kuala Lumpur Malaysia team, James here. I took a look at https://wenjieco.com/. When someone asks ChatGPT, Gemini or Google AI for a lawyer in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://wenjieco.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Strong",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 8676,
+      "failedChecks": [
+        "title"
+      ],
+      "finalUrl": "https://www.wenjieco.com/",
+      "findings": [],
+      "pagesAudited": 6,
+      "readinessScore": 95,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 42
+    },
+    {
+      "group": "Law",
+      "host": "rameshyum.com",
+      "name": "Ramesh Yum & Co",
+      "sourceMessage": "Hi Ramesh Yum & Co team, James here. I took a look at https://www.rameshyum.com/. When someone asks ChatGPT, Gemini or Google AI for a lawyer in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 45/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 45,
+      "url": "https://www.rameshyum.com/",
+      "categoryStages": {
+        "Technical access": "Opportunity",
+        "Answer readiness": "Opportunity",
+        "Trust & conversion": "Established"
+      },
+      "elapsedMs": 64,
+      "failedChecks": [
+        "title",
+        "description",
+        "canonical",
+        "language",
+        "structured-data",
+        "question-content",
+        "about"
+      ],
+      "finalUrl": "https://www.rameshyum.com/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Improve the homepage summary"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 64,
+      "readinessStage": "Clear opportunity",
+      "scoreDelta": 19
+    },
+    {
+      "group": "Kids Enrichment",
+      "host": "thespeechacademy.com.my",
+      "name": "Speech Academy | Speech & Language Therapy Desa Sri Hartamas",
+      "sourceMessage": "Hi Speech Academy | Speech & Language Therapy Desa Sri Hartamas team, James here. I took a look at https://thespeechacademy.com.my/. When someone asks ChatGPT, Gemini or Google AI for a kids enrichment class in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 42/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 42,
+      "url": "https://thespeechacademy.com.my/",
+      "categoryStages": {
+        "Technical access": "Opportunity",
+        "Answer readiness": "Opportunity",
+        "Trust & conversion": "Established"
+      },
+      "elapsedMs": 257,
+      "failedChecks": [
+        "title",
+        "canonical",
+        "language",
+        "h1",
+        "structured-data",
+        "proof"
+      ],
+      "finalUrl": "https://thespeechacademy.com.my/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 65,
+      "readinessStage": "Clear opportunity",
+      "scoreDelta": 23
+    },
+    {
+      "group": "Kids Enrichment",
+      "host": "alisther.com",
+      "name": "Alisther Intervention & Rehabilitation Centre Bukit Jalil",
+      "sourceMessage": "Hi Alisther Intervention & Rehabilitation Centre Bukit Jalil team, James here. I took a look at http://www.alisther.com/. When someone asks ChatGPT, Gemini or Google AI for a kids enrichment class in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a Wix template that stays invisible.",
+      "sourceScore": 53,
+      "url": "http://www.alisther.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Strong",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 486,
+      "failedChecks": [],
+      "finalUrl": "https://www.alisther.com/",
+      "findings": [],
+      "pagesAudited": 6,
+      "readinessScore": 100,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 47
+    },
+    {
+      "group": "Kids Enrichment",
+      "host": "fedtoflourish.com",
+      "name": "Fed to Flourish Sdn Bhd",
+      "sourceMessage": "Hi Fed to Flourish Sdn Bhd team, James here. I took a look at https://www.fedtoflourish.com/. When someone asks ChatGPT, Gemini or Google AI for a kids enrichment class in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://www.fedtoflourish.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Strong",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 186,
+      "failedChecks": [],
+      "finalUrl": "https://fedtoflourish.com/",
+      "findings": [],
+      "pagesAudited": 6,
+      "readinessScore": 100,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 47
+    },
+    {
+      "group": "Tuition",
+      "host": "collinz.edu.my",
+      "name": "Collinz IGCSE Tuition Centre (Uptown Damansara Branch)",
+      "sourceMessage": "Hi Collinz IGCSE Tuition Centre (Uptown Damansara Branch) team, James here. I took a look at https://collinz.edu.my/tuition/. When someone asks ChatGPT, Gemini or Google AI for a tuition centre in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://collinz.edu.my/tuition/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Priority",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 1865,
+      "failedChecks": [
+        "h1",
+        "service-language",
+        "question-content",
+        "internal-links",
+        "contact",
+        "proof",
+        "about",
+        "cta"
+      ],
+      "finalUrl": "https://collinz.edu.my/tuition/",
+      "findings": [
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof",
+        "State your commercial offering more explicitly"
+      ],
+      "pagesAudited": 1,
+      "readinessScore": 53,
+      "readinessStage": "Foundational opportunity",
+      "scoreDelta": 0
+    },
+    {
+      "group": "Tuition",
+      "host": "zcode.academy",
+      "name": "Zcode Academy - Homeschool, Tuition & After-School | IGCSE, A Level & IB | Mont Kiara",
+      "sourceMessage": "Hi Zcode Academy - Homeschool, Tuition & After-School | IGCSE, A Level & IB | Mont Kiara team, James here. I took a look at https://www.zcode.academy/. When someone asks ChatGPT, Gemini or Google AI for a tuition centre in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 50/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 50,
+      "url": "https://www.zcode.academy/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Priority",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 6382,
+      "failedChecks": [
+        "h1",
+        "service-language",
+        "question-content",
+        "proof",
+        "about"
+      ],
+      "finalUrl": "https://zcode.academy/",
+      "findings": [
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof",
+        "State your commercial offering more explicitly"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 70,
+      "readinessStage": "Established",
+      "scoreDelta": 20
+    },
+    {
+      "group": "Tuition",
+      "host": "axiomlearning.com",
+      "name": "Axiom Learning - Kuala Lumpur",
+      "sourceMessage": "Hi Axiom Learning - Kuala Lumpur team, James here. I took a look at https://www.axiomlearning.com/kuala-lumpur?utm_source=google&utm_medium=GMB&utm_campaign=GMBweblink. When someone asks ChatGPT, Gemini or Google AI for a tuition centre in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://www.axiomlearning.com/kuala-lumpur?utm_source=google&utm_medium=GMB&utm_campaign=GMBweblink",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Established",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 10394,
+      "failedChecks": [
+        "title",
+        "h1"
+      ],
+      "finalUrl": "https://www.axiomlearning.com/kuala-lumpur/?utm_source=google&utm_medium=GMB&utm_campaign=GMBweblink",
+      "findings": [
+        "Lead with one unambiguous primary heading"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 88,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 35
+    },
+    {
+      "group": "Allied Health",
+      "host": "applephysiorehab.com",
+      "name": "Apple Physio Rehab (KL)",
+      "sourceMessage": "Hi Apple Physio Rehab (KL) team, James here. I took a look at http://www.applephysiorehab.com/. When someone asks ChatGPT, Gemini or Google AI for a physio or chiropractor in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 53,
+      "url": "http://www.applephysiorehab.com/",
+      "elapsedMs": 589,
+      "error": "HOMEPAGE_HTTP_403"
+    },
+    {
+      "group": "Allied Health",
+      "host": "chirozonekl.com",
+      "name": "Chirozone Family Solaris Mont Kiara Chiropractic",
+      "sourceMessage": "Hi Chirozone Family Solaris Mont Kiara Chiropractic team, James here. I took a look at http://www.chirozonekl.com/. When someone asks ChatGPT, Gemini or Google AI for a physio or chiropractor in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a Wix template that stays invisible.",
+      "sourceScore": 53,
+      "url": "http://www.chirozonekl.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Strong",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 535,
+      "failedChecks": [
+        "question-content"
+      ],
+      "finalUrl": "https://www.chirozonekl.com/",
+      "findings": [],
+      "pagesAudited": 6,
+      "readinessScore": 95,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 42
+    },
+    {
+      "group": "Allied Health",
+      "host": "perfecthealthcare.com.my",
+      "name": "Perfect Physio",
+      "sourceMessage": "Hi Perfect Physio team, James here. I took a look at https://www.perfecthealthcare.com.my/. When someone asks ChatGPT, Gemini or Google AI for a physio or chiropractor in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 44/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 44,
+      "url": "https://www.perfecthealthcare.com.my/",
+      "categoryStages": {
+        "Technical access": "Established",
+        "Answer readiness": "Established",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 2701,
+      "failedChecks": [
+        "description",
+        "canonical",
+        "structured-data"
+      ],
+      "finalUrl": "https://www.perfecthealthcare.com.my/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Improve the homepage summary"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 83,
+      "readinessStage": "Established",
+      "scoreDelta": 39
+    },
+    {
+      "group": "Home Living",
+      "host": "baagus.com",
+      "name": "BAAGUS Damansara Uptown (Curtains | Blinds | Wallpaper)",
+      "sourceMessage": "Hi BAAGUS Damansara Uptown (Curtains | Blinds | Wallpaper) team, James here. I took a look at https://baagus.com/. When someone asks ChatGPT, Gemini or Google AI for a home renovation or interiors firm in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 46/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a template that stays invisible.",
+      "sourceScore": 46,
+      "url": "https://baagus.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Opportunity",
+        "Trust & conversion": "Priority"
+      },
+      "elapsedMs": 388,
+      "failedChecks": [
+        "h1",
+        "structured-data",
+        "contact",
+        "cta"
+      ],
+      "finalUrl": "https://baagus.com/",
+      "findings": [
+        "Make your business easier for machines to identify",
+        "Lead with one unambiguous primary heading",
+        "Make the next step unmistakable"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 72,
+      "readinessStage": "Established",
+      "scoreDelta": 26
+    },
+    {
+      "group": "Home Living",
+      "host": "klcitycurtain.com.my",
+      "name": "KL City Curtain Enterprise | Window Blinds | Curtain Supplier | Carpet and Wallpapers Supplier | Ready-Made | Custom-Made",
+      "sourceMessage": "Hi KL City Curtain Enterprise | Window Blinds | Curtain Supplier | Carpet and Wallpapers Supplier | Ready-Made | Custom-Made team, James here. I took a look at https://klcitycurtain.com.my/product/. When someone asks ChatGPT, Gemini or Google AI for a home renovation or interiors firm in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 53/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 53,
+      "url": "https://klcitycurtain.com.my/product/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Established",
+        "Trust & conversion": "Established"
+      },
+      "elapsedMs": 17903,
+      "failedChecks": [
+        "h1",
+        "proof"
+      ],
+      "finalUrl": "https://klcitycurtain.com.my/product/",
+      "findings": [
+        "Lead with one unambiguous primary heading",
+        "Give recommendation systems stronger proof"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 86,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 33
+    },
+    {
+      "group": "Home Living",
+      "host": "a-triodesign.com",
+      "name": "A Trio Design Sdn Bhd",
+      "sourceMessage": "Hi A Trio Design Sdn Bhd team, James here. I took a look at https://www.a-triodesign.com/. When someone asks ChatGPT, Gemini or Google AI for a home renovation or interiors firm in Kuala Lumpur, they don't name you. AI recommends the sites it can actually read and understand, not whoever paid the most for SEO. Google + AI Findability came out 50/100 (scorecard attached). Warm buyers already searching for you are landing on a competitor's site instead. The fix isn't a nicer website. It's rebuilding it the proper way so AI can find and recommend you, not a WordPress template that stays invisible.",
+      "sourceScore": 50,
+      "url": "https://www.a-triodesign.com/",
+      "categoryStages": {
+        "Technical access": "Strong",
+        "Answer readiness": "Established",
+        "Trust & conversion": "Strong"
+      },
+      "elapsedMs": 10199,
+      "failedChecks": [
+        "h1"
+      ],
+      "finalUrl": "https://www.a-triodesign.com/",
+      "findings": [
+        "Lead with one unambiguous primary heading"
+      ],
+      "pagesAudited": 6,
+      "readinessScore": 93,
+      "readinessStage": "Strong foundation",
+      "scoreDelta": 43
+    }
+  ],
+  "sampleSize": 21,
+  "sourceProspects": 95,
+  "sourceUrl": "https://thunderous-kitsune-ca7394.netlify.app/"
+}

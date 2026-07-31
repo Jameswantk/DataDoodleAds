@@ -16,6 +16,7 @@ export type ScoreCategory = {
 
 export type Finding = {
   evidence: string;
+  evidenceKeys: string[];
   impact: string;
   priority: "High" | "Medium" | "Low";
   recommendation: string;
@@ -23,6 +24,7 @@ export type Finding = {
 };
 
 export type AuditResult = {
+  analysisMode: "rules-only" | "workers-ai";
   auditedAt: string;
   categories: ScoreCategory[];
   checks: CheckResult[];
@@ -30,6 +32,12 @@ export type AuditResult = {
   findings: Finding[];
   homepageTitle: string | null;
   methodologyVersion: string;
+  narrativeModel: string | null;
+  pagesAudited: Array<{
+    status: number;
+    title: string | null;
+    url: string;
+  }>;
   score: number;
   summary: string;
 };

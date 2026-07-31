@@ -1,292 +1,189 @@
 # Architecture and Decision Logic
 
-## 1. System objective
+## Scope
 
-Turn an advertisement click into a traceable, evidence-backed audit and then
-into a consultation opportunity. The public experience must remain fast even
-when crawling, rendering, model calls, or CRM delivery are slow.
-
-## 2. Target production architecture
+The landing page and CRM are external systems managed by the marketer. This
+repository begins only when the marketer's backend requests an audit.
 
 ```mermaid
 flowchart LR
-    AD[Meta / campaign traffic] --> LP[Landing page]
-    LP --> API[Intake Worker]
-    API --> D1[(D1)]
-    API --> WF[Audit Workflow]
-    WF --> SAFE[URL safety gate]
-    SAFE --> CRAWL[Bounded crawler]
-    CRAWL --> BR[Browser Rendering]
-    CRAWL --> RULES[Evidence + score engine]
-    BR --> R2[(R2 evidence)]
-    RULES --> MODEL[Narrative adapter]
-    MODEL --> D1
-    D1 --> REPORT[Private report]
-    REPORT --> EVENTS[Engagement events]
-    WF --> CRM[CRM webhook]
-    WF --> MSG[Email / SMS]
-    EVENTS --> CRM
+  LP["Marketer landing page"] --> CRM["Marketer backend / CRM"]
+  CRM -->|"Bearer key + idempotency key"| API["Audit API"]
+  API --> D1[("D1 jobs")]
+  API --> WF["Cloudflare Workflow"]
+  WF --> HOME["Fetch homepage + fingerprint"]
+  HOME --> CACHE{"Fresh cache hit?"}
+  CACHE -->|"No"| CRAWL["Bounded crawler"]
+  CACHE -->|"Yes"| D1
+  CRAWL --> RULES["Versioned score"]
+  RULES --> AI["Evidence-grounded narrative"]
+  AI --> CACHE
+  AI --> R2[("R2 evidence")]
+  AI --> D1
+  D1 --> REPORT["Private report"]
+  WF -->|"Signed completion callback"| CRM
 ```
 
-### Runtime responsibilities
+The audit service never needs the contact person's name, email, mobile number,
+marketing consent, ad attribution, or landing-page session.
 
-| Component | Owns | Must not own |
+## Request lifecycle
+
+1. The marketer creates its own lead and stable `externalLeadId`.
+2. Its backend calls `POST /api/v1/audits` with bearer authentication and a
+   required `Idempotency-Key`.
+3. The API validates the payload and URL, persists a queued job, and returns
+   `202 Accepted`.
+4. A Cloudflare Workflow runs bounded crawl, deterministic scoring, optional
+   narrative generation, evidence persistence, and completion delivery.
+5. The marketer can poll the authenticated status URL.
+6. The service sends an HMAC-signed `audit.completed` callback.
+7. The marketer stores the report URL against its own lead and chooses how to
+   deliver or display it.
+
+Retries with the same idempotency key and identical payload return the original
+job. Reusing the key for a different lead or URL returns a conflict.
+
+## Ownership
+
+| Component | Owns | Does not own |
 | --- | --- | --- |
-| Landing page | Value proposition, lead fields, consent, attribution | Audit execution |
-| Intake Worker | Validation, identifiers, persistence, workflow start | Long-running crawl |
-| Workflow | Durable state transitions, retries, idempotency | Public presentation |
-| Crawler | Public-page retrieval within a fixed budget | Narrative conclusions |
-| Score engine | Versioned deterministic scoring | Platform-ranking claims |
-| Narrative adapter | Explanation of stored evidence | New facts or unverified claims |
-| Report | Evidence, priorities, CTA, engagement events | Contact details in URL |
-| CRM adapter | Lead/opportunity synchronization | Source-of-truth audit evidence |
+| Marketer | Ads, landing page, PII, consent, attribution, CRM, lead delivery | Audit evidence or score |
+| Audit API | Auth, validation, idempotency, status contract | Browser form or campaign tracking |
+| Workflow | Durable steps, retry policy, terminal state | Sales follow-up |
+| Crawler | Bounded public-page evidence | Unbounded browsing or form actions |
+| Score engine | Versioned deterministic checks | Narrative or platform ranking |
+| Narrative adapter | Concise explanation of failed checks | Score changes or unsupported facts |
+| Report | Findings, evidence, priorities, optional CTA | Contact data |
+| Callback adapter | Signed completion event | CRM business logic |
 
-## 3. Current MVP versus target
+## State and durability
 
-The repository currently performs a bounded single-homepage audit inside the
-intake request. This proves the complete acquisition loop with minimal moving
-parts.
+Jobs use `queued`, `processing`, `completed`, and `failed`. Operational events
+are append-only. Workflow step boundaries make external work retryable without
+duplicating the audit job.
 
-The production migration keeps the API contract and report schema stable:
+The completion callback is downstream of report completion. Exhausted callback
+delivery changes callback state but does not erase a completed audit.
 
-1. Intake writes a `queued` audit instead of `processing`.
-2. Intake starts a Workflow and returns `/audit/{token}` immediately.
-3. The report route renders queued/processing/completed/failed states.
-4. Workflow steps persist evidence before invoking the narrative adapter.
-5. CRM and notification delivery become retryable non-blocking steps.
+When the Workflow binding is absent in local or preview environments, the API
+uses `ctx.waitUntil` as a non-durable development fallback. Production should
+bind `AUDIT_WORKFLOW`.
 
-No landing-page or report rewrite is required for that migration.
+## Evidence and scoring
 
-## 4. Audit state machine
+The crawler starts with the submitted page and prioritizes a small number of
+same-origin service, product, about, case-study, FAQ, contact, and location
+pages. Each response has scheme, redirect, content-type, timeout, and size
+limits.
 
-```mermaid
-stateDiagram-v2
-    [*] --> queued
-    queued --> validating
-    validating --> crawling
-    crawling --> rendering
-    rendering --> scoring
-    scoring --> narrating
-    narrating --> completed
-    validating --> failed
-    crawling --> failed
-    rendering --> partial
-    partial --> scoring
-    scoring --> failed
-    completed --> delivered
-    delivered --> viewed
-    viewed --> booked
-```
+`site-readiness-v2` totals 100 points:
 
-Every transition should append an `audit_events` row. Replayed Workflow steps
-must use stable idempotency keys so retries cannot create duplicate leads,
-reports, messages, or CRM opportunities.
+- technical access: 40
+- answer readiness: 35
+- trust and conversion: 25
 
-## 5. Evidence model
+Homepage-only checks such as the primary heading, canonical, robots directive,
+viewport, language, contact paths, CTA, and internal navigation are calculated
+only from the submitted page. Service, location, FAQ, proof, and about evidence
+may use the bounded site corpus. This prevents a secondary page from masking a
+homepage defect. Same-origin absolute and relative links are both recognized.
 
-Evidence is stored in a normalized document before scoring:
+Responses are bounded at 3 MB. Large builder HTML is compacted before parsing
+by removing non-evidence scripts, styles, SVG, templates, images, comments, and
+noisy attributes. If safe evidence still cannot be collected, the audit fails
+instead of manufacturing a low score.
 
-```ts
-type EvidenceDocument = {
-  auditId: string;
-  methodologyVersion: string;
-  pages: Array<{
-    requestedUrl: string;
-    finalUrl: string;
-    status: number;
-    title: string | null;
-    description: string | null;
-    headings: string[];
-    internalLinks: string[];
-    jsonLd: unknown[];
-    robots: string[];
-    screenshotKeys: { desktop?: string; mobile?: string };
-  }>;
-  site: {
-    robotsTxt?: string;
-    sitemapUrls: string[];
-    canonicalHost: string;
-  };
-};
-```
+Every check has a stable key, weight, pass/fail result, and evidence statement.
+Changing weights or pass criteria requires a new methodology version.
 
-Large HTML, screenshots, PDFs, and browser snapshots belong in R2. D1 stores
-searchable metadata, scores, status, and R2 object keys.
+## AI boundary
 
-## 6. Scoring logic
+AI does not crawl and does not calculate the score. The optional Workers AI
+adapter receives a compact evidence object: category totals, at most six failed
+checks, at most three strengths, and a page count. It returns no more than three
+findings. Its structured response is accepted only when every finding cites a
+failed check key from the input and contains complete bounded sentences.
+Invalid or truncated output falls back immediately to deterministic rules-only
+findings; it does not trigger a second model call.
 
-The current `homepage-readiness-v1` score totals 100:
+Website content is treated as untrusted data, not as instructions.
 
-- Technical access: 40
-- Answer readiness: 35
-- Trust and conversion: 25
+The production Worker does not yet capture rendered desktop/mobile screenshots
+or run Terra/Codex. Terra remains a local benchmark option. A browser-capable
+worker can be added later for visual evidence without changing the scoring or
+CRM contract. Live answer-platform observations are a later, separate stage for
+engaged leads and must not be represented as part of this readiness score.
 
-Each check contains:
+## Cache and cost boundary
 
-- stable key
-- human label
-- pass/fail result
-- weight
-- evidence statement
+The homepage is fetched and compacted before analysis. A SHA-256 content
+fingerprint is combined with locale, methodology version, narrative version,
+and model identifier. An unexpired D1 cache hit skips the secondary crawl and
+AI generation. The default lifetime is 14 days and can be configured from 1 to
+30 days with `AUDIT_CACHE_TTL_DAYS`. A scoring, prompt, locale, model, or site
+homepage content change automatically produces a cache miss. Changes limited
+to secondary pages age out at the configured cache expiry.
 
-Changing weights or pass criteria requires a new methodology version. Existing
-reports retain the version used when they were generated.
+## API and callback trust
 
-### Observed visibility is separate
+- Intake and status routes require `Authorization: Bearer ...`.
+- The API key is configured as a Worker secret.
+- The browser landing page should call the marketer's backend, not this API.
+- No broad CORS policy is enabled.
+- Each callback includes a stable event ID, Unix timestamp, and
+  `sha256=<hex>` HMAC over `<timestamp>.<raw-body>`.
+- Callback consumers must verify the signature, reject stale timestamps, and
+  deduplicate event IDs.
 
-Platform visibility experiments must never be mixed silently into readiness.
-Each observation needs:
+See [INTEGRATION.md](./INTEGRATION.md) for exact payloads.
 
-- platform and product surface
-- model/version when available
-- exact query
-- market/location/language
-- timestamp
-- whether browsing/search was enabled
-- business mention and rank
-- cited source URLs
-- captured response evidence
+## Data model
 
-API output may not represent consumer-product output. Reports must disclose the
-surface actually tested.
+`audit_jobs` stores external references, normalized URL, state, score, result
+JSON, callback delivery state, and timestamps. `audit_service_events` records
+state and delivery events. `audit_result_cache` stores fingerprinted completed
+results and expiry timestamps. R2 stores `audits/{auditId}/result.json`.
 
-## 7. Model routing
+Legacy `leads`, `audits`, and `audit_events` tables are retained only to avoid a
+destructive migration from the earlier landing-page MVP. The new API never
+writes them.
 
-Models interpret evidence; they do not crawl or score.
+## Security gates
 
-Recommended routing:
+Current checks reject non-HTTP schemes, credentials, localhost, obvious
+private/reserved literal addresses, IPv6 literals, and internal-use suffixes.
+Redirects are checked again.
 
-1. Pure code extracts facts and calculates the score.
-2. A cost-efficient structured-output model creates a concise explanation.
-3. A stronger model is called only when checks conflict or confidence is low.
-4. The model receives only the normalized evidence document.
-5. Every generated claim must reference an evidence key.
-6. Schema validation rejects unsupported claims.
+Before accepting untrusted production traffic, add a dedicated DNS/egress
+layer that rejects private and reserved destinations immediately before
+connection and after every redirect. It must cover DNS rebinding, alternative
+IP encodings, decompression bombs, crawl explosions, and authenticated or
+side-effecting pages.
 
-Provider adapters should implement:
+Other production controls:
 
-```ts
-interface NarrativeProvider {
-  generate(input: {
-    evidence: EvidenceDocument;
-    score: AuditScore;
-  }): Promise<{
-    summary: string;
-    findings: Array<{
-      evidenceKeys: string[];
-      impact: string;
-      recommendation: string;
-      title: string;
-    }>;
-  }>;
-}
-```
+- rate and concurrency limits per key and domain
+- secret rotation and scoped staff access
+- report token expiry or revocation
+- documented retention and deletion
+- callback dead-letter recovery
+- metrics and alerts for crawl, model, and callback failures
 
-This interface supports an API model today and a local/open-weight pull consumer
-later without changing report storage.
+## Hosting choices
 
-## 8. URL and crawl security
+Cloudflare is the production default because API, D1, R2, Workflow, and Workers
+AI bindings can live in one operational boundary. A localhost build is useful
+for development and manual review, but is not reliable enough as the public
+endpoint for paid traffic.
 
-The current guard rejects non-HTTP schemes, credentials, localhost, obvious
-private/reserved IPv4 addresses, IPv6 literals, and internal-use suffixes. Every
-redirect is normalized and checked again. Responses have strict timeout, size,
-content-type, and redirect limits.
+A later hybrid design may keep Cloudflare as the control plane while a secured
+pull worker performs browser-heavy rendering or open-weight inference. That
+worker must receive audit IDs and public URLs only, not CRM PII.
 
-Before broad production crawling, add a dedicated egress layer that resolves
-DNS and rejects private/reserved destinations both before connecting and after
-redirects. Protect against:
+## Success metrics
 
-- DNS rebinding
-- alternative IP encodings
-- redirect chains into private networks
-- oversized or compressed response bombs
-- infinite crawls and URL explosions
-- authentication/cookie prompts
-- form submission and other page side effects
-
-Crawler policy must be explicit about robots rules, user-agent identification,
-page budgets, and customer authorization.
-
-## 9. Data and privacy
-
-The report token is 192 bits of randomness and contains no email, mobile,
-domain, or lead ID. Treat it as a bearer secret.
-
-Production controls:
-
-- encrypt transport everywhere
-- restrict staff access to lead records
-- define retention and deletion policies
-- separate audit authorization from marketing consent
-- log consent timestamps and privacy-notice version
-- never send raw contact fields to analytics pixels
-- send PII to the configured CRM only
-- rotate webhook secrets
-- add token revocation and optional email verification for sensitive reports
-
-## 10. CRM contract
-
-The adapter emits a stable event envelope:
-
-```json
-{
-  "event": "audit_completed",
-  "auditId": "uuid",
-  "contactName": "Example",
-  "email": "owner@example.com",
-  "mobile": "+60123456789",
-  "websiteUrl": "https://example.com/",
-  "score": 63,
-  "reportUrl": "/audit/random-token"
-}
-```
-
-Production delivery should add:
-
-- schema version
-- event ID
-- timestamp
-- absolute report URL
-- HMAC signature
-- retry schedule
-- dead-letter queue
-- CRM response reference
-
-## 11. Deployment choices
-
-### Cloudflare-first
-
-Best default for paid traffic. Workers/Sites host intake and reports; D1 stores
-structured state; R2 stores evidence; Workflows orchestrate; Browser Rendering
-captures dynamic pages.
-
-### Local-only
-
-Useful for development and manual audits. A full local browser and local model
-are easy to operate, but uptime, security, backups, and ad-traffic reliability
-become the operator's responsibility.
-
-### Hybrid
-
-Cloudflare remains the public control plane. A Queue pull consumer running on a
-local workstation or GPU server handles browser-heavy crawling or open-weight
-inference and returns normalized evidence. If the consumer is offline, jobs
-wait instead of losing the lead.
-
-## 12. Observability
-
-Track:
-
-- submission acceptance rate
-- invalid/blocked URL rate
-- crawl success and duration
-- render and model latency
-- score distribution by campaign
-- report delivery and view rate
-- consultation click and booking rate
-- CRM delivery failures
-- cost per completed audit
-- completed-audit-to-booking conversion
-
-Business success is consultation and revenue conversion—not the number of
-reports generated.
+Measure accepted-to-completed audits, crawl success, processing latency,
+callback success, report view rate, consultation conversion, and cost per
+completed audit. The marketer remains the source of truth for lead and revenue
+conversion.

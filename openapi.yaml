@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: SignalFound Audit Engine API
+  version: 1.0.0
+  description: Server-to-server website audit intake and status API.
+servers:
+  - url: https://audit.example.com
+paths:
+  /health:
+    get:
+      security: []
+      responses:
+        "200":
+          description: Service health
+  /api/v1/audits:
+    post:
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAuditRequest"
+      responses:
+        "202":
+          description: Audit accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditJob"
+        "200":
+          description: Existing idempotent audit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditJob"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+  /api/v1/audits/{auditId}:
+    get:
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auditId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Audit status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditJob"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    CreateAuditRequest:
+      type: object
+      required: [externalLeadId, websiteUrl]
+      properties:
+        externalLeadId:
+          type: string
+          minLength: 1
+          maxLength: 160
+        websiteUrl:
+          type: string
+          format: uri
+        locale:
+          type: string
+          maxLength: 20
+      additionalProperties: true
+    AuditJob:
+      type: object
+      required:
+        - auditId
+        - externalLeadId
+        - websiteUrl
+        - status
+        - statusUrl
+        - callbackStatus
+        - createdAt
+        - updatedAt
+      properties:
+        auditId:
+          type: string
+          format: uuid
+        externalLeadId:
+          type: string
+        websiteUrl:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        score:
+          type: [integer, "null"]
+          minimum: 0
+          maximum: 100
+        reportUrl:
+          type: [string, "null"]
+          format: uri
+        statusUrl:
+          type: string
+          format: uri
+        callbackStatus:
+          type: string
+          enum: [pending, delivered, failed, skipped]
+        errorCode:
+          type: [string, "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: object
+                required: [code, message]
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string

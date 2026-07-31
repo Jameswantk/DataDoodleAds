@@ -6,6 +6,13 @@ import type {
 } from "./types";
 import type { HomepageSnapshot } from "./inspect";
 
+export type ScoringContext = {
+  pagesAudited?: AuditResult["pagesAudited"];
+  siteHtml?: string;
+};
+
+export const METHODOLOGY_VERSION = "site-readiness-v2";
+
 function match(html: string, expression: RegExp) {
   return expression.test(html);
 }
@@ -13,6 +20,80 @@ function match(html: string, expression: RegExp) {
 function capture(html: string, expression: RegExp) {
   const value = html.match(expression)?.[1]?.replace(/\s+/g, " ").trim();
   return value ? value.slice(0, 240) : null;
+}
+
+function primaryHeading(html: string) {
+  for (const heading of html.matchAll(/<h1\b([^>]*)>([\s\S]*?)<\/h1>/gi)) {
+    const attributes = heading[1] ?? "";
+    if (
+      /\bhidden\b/i.test(attributes) ||
+      /aria-hidden=["']?true/i.test(attributes) ||
+      /(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(attributes)
+    ) {
+      continue;
+    }
+    const text = heading[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (text) return text.slice(0, 240);
+  }
+  return null;
+}
+
+function isDescriptiveHeading(value: string | null) {
+  if (!value || value.length < 12) return false;
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return ![
+    "our service",
+    "our services",
+    "what we do",
+    "who we are",
+    "why choose us",
+    "welcome",
+    "welcome to our website",
+  ].includes(normalized);
+}
+
+function internalLinkCount(html: string, pageUrl: string) {
+  const origin = new URL(pageUrl).origin;
+  const links = new Set<string>();
+  for (const match of html.matchAll(/<a\b[^>]+href=["']([^"'#]+)["']/gi)) {
+    try {
+      const url = new URL(match[1], pageUrl);
+      if (url.origin !== origin || !["http:", "https:"].includes(url.protocol)) {
+        continue;
+      }
+      url.hash = "";
+      links.add(url.toString());
+    } catch {
+      // Invalid and non-HTTP links do not count as crawlable navigation.
+    }
+  }
+  return links.size;
+}
+
+function robotsContent(html: string) {
+  return (
+    capture(
+      html,
+      /<meta[^>]+name=["']robots["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    ) ??
+    capture(
+      html,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']robots["'][^>]*>/i,
+    )
+  );
+}
+
+function visibleText(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 }
 
 function check(
@@ -25,23 +106,25 @@ function check(
   return { key, label, passed, weight, points: passed ? weight : 0, evidence };
 }
 
-export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
-  const html = snapshot.html;
-  const title = capture(html, /<title[^>]*>([\s\S]*?)<\/title>/i);
+export function scoreHomepage(
+  snapshot: HomepageSnapshot,
+  context: ScoringContext = {},
+): AuditResult {
+  const homepageHtml = snapshot.html;
+  const siteHtml = context.siteHtml ?? homepageHtml;
+  const title = capture(homepageHtml, /<title[^>]*>([\s\S]*?)<\/title>/i);
   const description = capture(
-    html,
+    homepageHtml,
     /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i,
   ) ?? capture(
-    html,
+    homepageHtml,
     /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["'][^>]*>/i,
   );
-  const h1 = capture(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i)?.replace(/<[^>]+>/g, "");
-  const visibleText = html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .toLowerCase();
+  const h1 = primaryHeading(homepageHtml);
+  const homepageText = visibleText(homepageHtml);
+  const siteText = visibleText(siteHtml);
+  const internalLinks = internalLinkCount(homepageHtml, snapshot.finalUrl);
+  const robots = robotsContent(homepageHtml);
 
   const technical = [
     check(
@@ -79,31 +162,30 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
     check(
       "canonical",
       "Canonical URL declared",
-      match(html, /<link[^>]+rel=["'][^"']*canonical[^"']*["'][^>]*>/i),
+      match(homepageHtml, /<link[^>]+rel=["'][^"']*canonical[^"']*["'][^>]*>/i),
       4,
       "Checked the rendered homepage markup for a canonical link.",
     ),
     check(
       "robots",
       "Homepage is not marked noindex",
-      !match(
-        html,
-        /<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i,
-      ),
+      !robots?.toLowerCase().includes("noindex"),
       5,
-      "Checked the homepage robots directive.",
+      robots
+        ? `Homepage robots directive: “${robots}”.`
+        : "No homepage noindex directive was detected.",
     ),
     check(
       "viewport",
       "Mobile viewport configured",
-      match(html, /<meta[^>]+name=["']viewport["'][^>]*>/i),
+      match(homepageHtml, /<meta[^>]+name=["']viewport["'][^>]*>/i),
       4,
       "Checked for a mobile viewport declaration.",
     ),
     check(
       "language",
       "Page language declared",
-      match(html, /<html[^>]+lang=["'][a-z]{2,}/i),
+      match(homepageHtml, /<html[^>]+lang=["'][a-z]{2,}/i),
       4,
       "Checked the root document language attribute.",
     ),
@@ -113,14 +195,14 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
     check(
       "h1",
       "Clear primary heading",
-      Boolean(h1 && h1.length >= 12),
+      isDescriptiveHeading(h1),
       7,
       h1 ? `Primary heading: “${h1}”` : "No usable H1 was detected.",
     ),
     check(
       "structured-data",
       "Structured business data",
-      match(html, /application\/ld\+json/i),
+      match(homepageHtml, /application\/ld\+json/i),
       8,
       "Checked for JSON-LD structured data.",
     ),
@@ -128,34 +210,33 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
       "service-language",
       "Service or product language",
       /\b(service|services|solutions|products|what we do|how we help)\b/i.test(
-        visibleText,
+        siteText,
       ),
       6,
-      "Checked visible homepage copy for explicit offering language.",
+      "Checked the audited public pages for explicit offering language.",
     ),
     check(
       "location-language",
       "Location or service-area context",
-      /\b(location|locations|service area|serving|based in|near you|nationwide|global)\b/i.test(
-        visibleText,
-      ),
+      /\b(location|locations|service area|serving|based in|near you|nationwide|global|kuala lumpur|malaysia|selangor|petaling jaya|singapore)\b/i.test(siteText) ||
+        /\b(addressLocality|addressRegion|areaServed|PostalAddress)\b/i.test(siteHtml),
       5,
-      "Checked visible homepage copy for geographic context.",
+      "Checked audited copy and structured data for geographic context.",
     ),
     check(
       "question-content",
       "Question-led explanatory content",
-      match(html, /<h[2-4][^>]*>[^<]*(how|what|why|when|where|who)[^<]*<\/h[2-4]>/i) ||
-        match(html, /faq/i),
+      match(siteHtml, /<h[2-4][^>]*>[^<]*(how|what|why|when|where|who)[^<]*<\/h[2-4]>/i) ||
+        match(siteHtml, /faq/i),
       5,
       "Checked headings and markup for FAQ or question-led content.",
     ),
     check(
       "internal-links",
       "Useful internal navigation",
-      (html.match(/<a\b[^>]+href=["'][/][^"']*["']/gi) ?? []).length >= 4,
+      internalLinks >= 4,
       4,
-      "Counted crawlable internal links on the homepage.",
+      `${internalLinks} unique same-origin homepage links were detected.`,
     ),
   ];
 
@@ -164,7 +245,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
       "contact",
       "Contact route is visible",
       /\b(contact|call us|email us|get in touch|book a|schedule a)\b/i.test(
-        visibleText,
+        homepageText,
       ),
       6,
       "Checked visible copy for a clear contact route.",
@@ -173,7 +254,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
       "proof",
       "Evidence and proof signals",
       /\b(case stud|testimonial|review|client|customer|results|years of experience|certified|award)\b/i.test(
-        visibleText,
+        siteText,
       ),
       7,
       "Checked visible copy for reviews, results, credentials, or case studies.",
@@ -181,7 +262,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
     check(
       "about",
       "Business identity explained",
-      /\b(about us|our story|our team|who we are)\b/i.test(visibleText),
+      /\b(about us|our story|our team|who we are)\b/i.test(siteText),
       5,
       "Checked for an about, team, or company-identity route.",
     ),
@@ -189,7 +270,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
       "cta",
       "Action-oriented next step",
       /\b(get started|request|book|schedule|contact|get a quote|talk to|buy now|start now)\b/i.test(
-        visibleText,
+        homepageText,
       ),
       7,
       "Checked the homepage for a clear action-oriented call to action.",
@@ -217,7 +298,7 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
 
   const findingTemplates: Record<
     string,
-    Omit<Finding, "evidence">
+    Omit<Finding, "evidence" | "evidenceKeys">
   > = {
     "structured-data": {
       priority: "High",
@@ -280,17 +361,26 @@ export function scoreHomepage(snapshot: HomepageSnapshot): AuditResult {
   const findings = checks
     .filter((item) => !item.passed && findingTemplates[item.key])
     .sort((a, b) => b.weight - a.weight)
-    .slice(0, 5)
-    .map((item) => ({ ...findingTemplates[item.key], evidence: item.evidence }));
+    .slice(0, 3)
+    .map((item) => ({
+      ...findingTemplates[item.key],
+      evidence: item.evidence,
+      evidenceKeys: [item.key],
+    }));
 
   return {
+    analysisMode: "rules-only",
     auditedAt: new Date().toISOString(),
     categories,
     checks,
     finalUrl: snapshot.finalUrl,
     findings,
     homepageTitle: title,
-    methodologyVersion: "homepage-readiness-v1",
+    methodologyVersion: METHODOLOGY_VERSION,
+    narrativeModel: null,
+    pagesAudited:
+      context.pagesAudited ??
+      [{ status: snapshot.status, title, url: snapshot.finalUrl }],
     score,
     summary:
       score >= 80
